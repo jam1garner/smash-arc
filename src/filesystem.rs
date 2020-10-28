@@ -1,4 +1,5 @@
 use modular_bitfield::prelude::*;
+use crate::Hash40;
 
 use binread::{
     BinRead,
@@ -74,7 +75,7 @@ pub struct FileSystem {
     pub hash_index_groups: Vec<HashIndexGroup>,
 
     #[br(count = fs_header.file_info_path_count)]
-    pub file_info_paths: Vec<FileInfoPath>,
+    pub file_paths: Vec<FilePath>,
 
     #[br(count = fs_header.file_info_index_count)]
     pub file_info_indices: Vec<FileInfoIndex>,
@@ -86,7 +87,7 @@ pub struct FileSystem {
     pub dirs: Vec<DirectoryInfo>,
     
     #[br(count = fs_header.folder_offset_count_1 + fs_header.folder_offset_count_2 + fs_header.extra_folder)]
-    pub folder_offsets: Vec<DirectoryOffsets>,
+    pub folder_offsets: Vec<DirectoryOffset>,
 
     #[br(count = fs_header.hash_folder_count)]
     pub folder_child_hashes: Vec<HashIndexGroup>,
@@ -95,10 +96,10 @@ pub struct FileSystem {
     pub file_infos: Vec<FileInfo>,
 
     #[br(count = fs_header.file_info_sub_index_count + fs_header.sub_file_count_2 + fs_header.extra_count_2)]
-    pub file_info_sub_index: Vec<FileInfoSubIndex>,
+    pub file_info_to_datas: Vec<FileInfoToFileData>,
 
     #[br(count = fs_header.sub_file_count + fs_header.sub_file_count_2 + fs_header.extra_count)]
-    pub sub_files: Vec<SubFileInfo>,
+    pub file_datas: Vec<FileData>,
 }
 
 #[derive(BinRead, Debug, Clone, Copy)]
@@ -145,7 +146,8 @@ pub struct StreamHeader {
 }
 
 #[bitfield]
-#[derive(Debug, Clone, Copy)]
+#[derive(BinRead, Debug, Clone, Copy)]
+#[br(map = Self::from_bytes)]
 pub struct QuickDir {
     pub hash: u32,
     pub name_length: u8,
@@ -154,7 +156,8 @@ pub struct QuickDir {
 }
 
 #[bitfield]
-#[derive(Debug, Clone, Copy)]
+#[derive(BinRead, Debug, Clone, Copy)]
+#[br(map = Self::from_bytes)]
 pub struct StreamEntry {
     pub hash: u32,
     pub name_length: u8,
@@ -163,21 +166,12 @@ pub struct StreamEntry {
 }
 
 #[bitfield]
-#[derive(Debug, Clone, Copy)]
+#[derive(BinRead, Debug, Clone, Copy)]
+#[br(map = Self::from_bytes)]
 pub struct HashIndexGroup {
     pub hash: u32,
     pub length: u8,
     pub index: B24,
-}
-
-#[derive_binread]
-#[derive(Debug, Clone, Copy)]
-pub struct Hash40 {
-    pub hash: u32,
-    pub length: u8,
-
-    #[br(temp)]
-    padding: [u8; 3],
 }
 
 #[derive(BinRead, Debug, Clone, Copy)]
@@ -187,7 +181,7 @@ pub struct FileInfoBucket {
 }
 
 #[derive(BinRead, Debug, Clone, Copy)]
-pub struct FileInfoPath {
+pub struct FilePath {
     pub path: HashIndexGroup,
     pub ext: HashIndexGroup,
     pub parent: HashIndexGroup,
@@ -200,7 +194,7 @@ pub struct FileInfoIndex {
     pub file_info_index: u32,
 }
 
-#[derive(BinRead, Debug, Clone, Copy)]
+#[derive(BinRead, Debug, Clone)]
 pub struct DirectoryInfo {
     pub path_hash: u32,
     pub dir_offset_index: u32,
@@ -221,8 +215,8 @@ pub struct StreamOffsetEntry {
     pub offset: u64,
 }
 
-#[derive(BinRead, Debug, Clone, Copy)]
-pub struct DirectoryOffsets {
+#[derive(BinRead, Debug, Clone)]
+pub struct DirectoryOffset {
     pub offset: u64,
     pub decomp_size: u32,
     pub size: u32,
@@ -238,64 +232,48 @@ pub struct FileInfo {
     // IndexIndex
     pub hash_index_2: u32,
     // SubIndexIndex
-    pub sub_file_index: u32,
+    pub info_to_data_index: u32,
     // Flags
-    pub flags: u32,
+    pub flags: FileInfoFlags,
+}
+
+#[bitfield]
+#[derive(BinRead, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[br(map = Self::from_bytes)]
+pub struct FileInfoFlags {
+    pub unused: B4,
+    pub is_redirect: bool,
+    pub unused2: B7,
+    pub unknown1: bool,
+    pub padding3: B2,
+    pub is_regional: bool,
+    pub is_localized: bool,
+    pub unused3: B3,
+    pub unknown2: bool,
+    pub unknown3: bool,
+    pub unused4: B10,
 }
 
 #[derive(BinRead, Debug, Clone, Copy)]
-pub struct FileInfoSubIndex {
+pub struct FileInfoToFileData {
     pub folder_offset_index: u32,
-    pub sub_file_index: u32,
+    pub file_data_index: u32,
     pub file_info_index_and_flag: u32,
 }
 
 #[derive(BinRead, Debug, Clone, Copy)]
-pub struct SubFileInfo {
-    pub offset: u32,
+pub struct FileData {
+    pub offset_in_folder: u32,
     pub comp_size: u32,
     pub decomp_size: u32,
-    pub flags: u32,
+    pub flags: FileDataFlags,
 }
 
-impl From<[u8; 0xC]> for QuickDir {
-    fn from(bytes: [u8; 0xC]) -> Self {
-        Self::from_bytes(bytes)
-    }
-}
-
-impl From<[u8; 0xC]> for StreamEntry {
-    fn from(bytes: [u8; 0xC]) -> Self {
-        Self::from_bytes(bytes)
-    }
-}
-
-impl From<[u8; 0x8]> for HashIndexGroup {
-    fn from(bytes: [u8; 0x8]) -> Self {
-        Self::from_bytes(bytes)
-    }
-}
-
-impl BinRead for QuickDir {
-    type Args = ();
-
-    fn read_options<R: Read + Seek>(reader: &mut R, options: &ReadOptions, args: Self::Args) -> BinResult<Self> {
-        BinRead::read_options(reader, options, args).map(<[u8; 0xC]>::into)
-    }
-}
-
-impl BinRead for StreamEntry {
-    type Args = ();
-
-    fn read_options<R: Read + Seek>(reader: &mut R, options: &ReadOptions, args: Self::Args) -> BinResult<Self> {
-        BinRead::read_options(reader, options, args).map(<[u8; 0xC]>::into)
-    }
-}
-
-impl BinRead for HashIndexGroup {
-    type Args = ();
-
-    fn read_options<R: Read + Seek>(reader: &mut R, options: &ReadOptions, args: Self::Args) -> BinResult<Self> {
-        BinRead::read_options(reader, options, args).map(<[u8; 0x8]>::into)
-    }
+#[bitfield]
+#[derive(BinRead, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[br(map = Self::from_bytes)]
+pub struct FileDataFlags {
+    pub compressed: bool,
+    pub use_zstd: bool,
+    pub unk: B30,
 }
