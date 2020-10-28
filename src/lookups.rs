@@ -19,14 +19,7 @@ pub enum LookupError {
 impl Arc {
     pub fn get_file_contents<Hash: Into<Hash40>>(&self, hash: Hash) -> Result<Vec<u8>, LookupError> {
         fn inner(arc: &Arc, hash: Hash40) -> Result<Vec<u8>, LookupError> {
-            let bucket = arc.get_bucket_for_hash(hash);
-            
-            let index_in_bucket = bucket.binary_search_by_key(&hash, |group| group.hash40())
-                .map_err(|_| LookupError::Missing)?;
-
-            let path_index = bucket[index_in_bucket].index();
-            let file_info = arc.get_file_info_from_path_index(path_index);
-
+            let file_info = arc.get_file_info_from_hash(hash)?;
             let folder_offset = arc.get_folder_offset(file_info);
             let file_data = arc.get_file_data(file_info);
 
@@ -43,6 +36,18 @@ impl Arc {
         let bucket = &fs.hash_index_groups[bucket.range()];
 
         bucket
+    }
+
+    pub fn get_file_info_from_hash(&self, hash: Hash40) -> Result<&FileInfo, LookupError> {
+        let bucket = self.get_bucket_for_hash(hash);
+        
+        let index_in_bucket = bucket.binary_search_by_key(&hash, |group| group.hash40())
+            .map_err(|_| LookupError::Missing)?;
+
+        let path_index = bucket[index_in_bucket].index();
+        let file_info = self.get_file_info_from_path_index(path_index);
+        
+        Ok(file_info)
     }
 
     pub fn get_file_info_from_path_index(&self, path_index: u32) -> &FileInfo {
@@ -72,29 +77,23 @@ impl Arc {
 
     pub fn read_file_data(&self, file_data: &FileData, folder_offset: u64) -> Result<Vec<u8>, LookupError> {
         let offset = folder_offset + self.file_section_offset + ((file_data.offset_in_folder as u64) <<  2);
-        
-        if file_data.flags.compressed() {
-            if file_data.flags.use_zstd() {
-                let mut data = Vec::with_capacity(file_data.decomp_size as usize);
-                let mut reader = self.reader.lock().unwrap();
-                reader.seek(SeekFrom::Start(offset))?;
-                let reader = Read::take(&mut **reader, file_data.comp_size as u64);
-                zstd::stream::copy_decode(reader, &mut data)?;
 
-                Ok(data)
-            } else {
-                Err(LookupError::UnsupportedCompression)
-            }
-        } else {
-            let mut data = Vec::with_capacity(file_data.decomp_size as usize);
-            let mut reader = self.reader.lock().unwrap();
-            reader.seek(SeekFrom::Start(offset))?;
-            let mut reader = Read::take(&mut **reader, file_data.comp_size as u64);
-            
-            io::copy(&mut reader, &mut data)?;
-
-            Ok(data)
+        if file_data.flags.compressed() && !file_data.flags.use_zstd() {
+            return Err(LookupError::UnsupportedCompression)
         }
+        
+        let mut data = Vec::with_capacity(file_data.decomp_size as usize);
+        let mut reader = self.reader.lock().unwrap();
+        reader.seek(SeekFrom::Start(offset))?;
+        let mut reader = Read::take(&mut **reader, file_data.comp_size as u64);
+
+        if file_data.flags.compressed() {
+            zstd::stream::copy_decode(reader, &mut data)?;
+        } else {
+            io::copy(&mut reader, &mut data)?;
+        }
+
+        Ok(data)
     }
 }
 
@@ -105,6 +104,11 @@ impl FileInfoBucket {
 
         start..end
     }
+}
+
+pub enum FileNode {
+    Dir(Hash40),
+    File(Hash40)
 }
 
 #[cfg(test)]
