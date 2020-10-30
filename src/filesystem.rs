@@ -72,7 +72,7 @@ pub struct FileSystem {
     pub file_info_buckets: Vec<FileInfoBucket>,
 
     #[br(count = hash_index_group_count)]
-    pub hash_index_groups: Vec<HashIndexGroup>,
+    pub file_hash_to_path_index: Vec<HashToIndex>,
 
     #[br(count = fs_header.file_info_path_count)]
     pub file_paths: Vec<FilePath>,
@@ -81,16 +81,16 @@ pub struct FileSystem {
     pub file_info_indices: Vec<FileInfoIndex>,
     
     #[br(count = fs_header.folder_count)]
-    pub dir_hash_to_index: Vec<HashIndexGroup>,
+    pub dir_hash_to_info_index: Vec<HashToIndex>,
 
     #[br(count = fs_header.folder_count)]
-    pub dirs: Vec<DirectoryInfo>,
+    pub dirs: Vec<DirInfo>,
     
     #[br(count = fs_header.folder_offset_count_1 + fs_header.folder_offset_count_2 + fs_header.extra_folder)]
     pub folder_offsets: Vec<DirectoryOffset>,
 
     #[br(count = fs_header.hash_folder_count)]
-    pub folder_child_hashes: Vec<HashIndexGroup>,
+    pub folder_child_hashes: Vec<HashToIndex>,
 
     #[br(count = fs_header.file_info_count + fs_header.sub_file_count_2 + fs_header.extra_count)]
     pub file_infos: Vec<FileInfo>,
@@ -168,7 +168,7 @@ pub struct StreamEntry {
 #[bitfield]
 #[derive(BinRead, Debug, Clone, Copy)]
 #[br(map = Self::from_bytes)]
-pub struct HashIndexGroup {
+pub struct HashToIndex {
     pub hash: u32,
     pub length: u8,
     pub index: B24,
@@ -182,10 +182,10 @@ pub struct FileInfoBucket {
 
 #[derive(BinRead, Debug, Clone, Copy)]
 pub struct FilePath {
-    pub path: HashIndexGroup,
-    pub ext: HashIndexGroup,
-    pub parent: HashIndexGroup,
-    pub file_name: HashIndexGroup,
+    pub path: HashToIndex,
+    pub ext: HashToIndex,
+    pub parent: HashToIndex,
+    pub file_name: HashToIndex,
 }
 
 #[derive(BinRead, Debug, Clone, Copy)]
@@ -195,7 +195,7 @@ pub struct FileInfoIndex {
 }
 
 #[derive(BinRead, Debug, Clone)]
-pub struct DirectoryInfo {
+pub struct DirInfo {
     pub path_hash: u32,
     pub dir_offset_index: u32,
     pub name: Hash40,

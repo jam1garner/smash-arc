@@ -1,5 +1,5 @@
 use binread::BinRead;
-use crate::HashIndexGroup;
+use crate::{HashToIndex, DirInfo};
 
 #[derive(BinRead, Debug, Clone, Copy, PartialEq, Eq, Ord, PartialOrd, Hash)]
 pub struct Hash40(pub u64);
@@ -30,21 +30,27 @@ impl From<&str> for Hash40 {
     }
 }
 
-impl From<&HashIndexGroup> for Hash40 {
-    fn from(hash_index: &HashIndexGroup) -> Self {
+impl From<&HashToIndex> for Hash40 {
+    fn from(hash_index: &HashToIndex) -> Self {
         hash_index.hash40()
     }
 }
 
-impl From<HashIndexGroup> for Hash40 {
-    fn from(hash_index: HashIndexGroup) -> Self {
+impl From<HashToIndex> for Hash40 {
+    fn from(hash_index: HashToIndex) -> Self {
         hash_index.hash40()
     }
 }
 
-impl HashIndexGroup {
+impl HashToIndex {
     pub fn hash40(&self) -> Hash40 {
         Hash40((self.hash() as u64) + ((self.length() as u64) << 32))
+    }
+}
+
+impl DirInfo {
+    pub fn path_hash40(&self) -> Hash40 {
+        Hash40((self.path_hash as u64) + ((self.dir_offset_index as u64) & 0xFF) << 32)
     }
 }
 

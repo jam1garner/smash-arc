@@ -1,6 +1,6 @@
 use std::ops::Range;
 use std::io::{self, SeekFrom, Read};
-use crate::{Arc, Hash40, FileInfoBucket, FileData, FileInfo, HashIndexGroup};
+use crate::{Arc, Hash40, FileInfoBucket, FileData, FileInfo, HashToIndex, DirInfo, FileInfoToFileData};
 
 use thiserror::Error;
 
@@ -29,11 +29,11 @@ impl Arc {
         inner(self, hash.into())
     }
 
-    pub fn get_bucket_for_hash(&self, hash: Hash40) -> &[HashIndexGroup] {
+    pub fn get_bucket_for_hash(&self, hash: Hash40) -> &[HashToIndex] {
         let fs = &self.file_system;
         let bucket_index = (hash.as_u64() % (fs.file_info_buckets.len() as u64)) as usize;
         let bucket = &fs.file_info_buckets[bucket_index];
-        let bucket = &fs.hash_index_groups[bucket.range()];
+        let bucket = &fs.file_hash_to_path_index[bucket.range()];
 
         bucket
     }
@@ -50,6 +50,20 @@ impl Arc {
         Ok(file_info)
     }
 
+    pub fn get_dir_info_from_hash<Hash: Into<Hash40>>(&self, hash: Hash) -> Result<&DirInfo, LookupError> {
+        fn inner(arc: &Arc, hash: Hash40) -> Result<&DirInfo, LookupError> {
+            let fs = &arc.file_system;
+
+            let index = fs.dir_hash_to_info_index.binary_search_by_key(&hash, |dir| dir.hash40())
+                .map(|index| fs.dir_hash_to_info_index[index].index() as usize)
+                .map_err(|_| LookupError::Missing)?;
+
+            Ok(&fs.dirs[index])
+        }
+
+        inner(self, hash.into())
+    }
+
     pub fn get_file_info_from_path_index(&self, path_index: u32) -> &FileInfo {
         let fs = &self.file_system;
         let index = fs.file_paths[path_index as usize].path.index() as usize;
@@ -59,18 +73,24 @@ impl Arc {
         file_info
     }
 
+    pub fn get_file_in_folder(&self, file_info: &FileInfo) -> FileInfoToFileData {
+        if file_info.flags.is_regional() {
+            self.file_system.file_info_to_datas[file_info.info_to_data_index as usize + 2]
+        } else {
+            self.file_system.file_info_to_datas[file_info.info_to_data_index as usize]
+        }
+    }
+
     pub fn get_file_data(&self, file_info: &FileInfo) -> &FileData {
-        let fs = &self.file_system;
-        let file_in_folder = fs.file_info_to_datas[file_info.info_to_data_index as usize];
-        
-        &fs.file_datas[file_in_folder.file_data_index as usize]
+        let file_in_folder = self.get_file_in_folder(file_info);
+
+        &self.file_system.file_datas[file_in_folder.file_data_index as usize]
     }
 
     pub fn get_folder_offset(&self, file_info: &FileInfo) -> u64 {
-        let fs = &self.file_system;
-        let file_in_folder = fs.file_info_to_datas[file_info.info_to_data_index as usize];
+        let file_in_folder = self.get_file_in_folder(file_info);
 
-        let folder_offset = fs.folder_offsets[file_in_folder.folder_offset_index as usize].offset;
+        let folder_offset = self.file_system.folder_offsets[file_in_folder.folder_offset_index as usize].offset;
 
         folder_offset
     }
@@ -118,12 +138,31 @@ mod tests {
     #[test]
     fn test_get_file_data() {
         let arc = Arc::open("/home/jam/re/ult/900/data.arc").unwrap();
-        let data = arc.get_file_contents("fighter/pickel/model/body/c00/def_pickel_001_col.nutexb").unwrap();
+        let data = arc.get_file_contents("ui/message/msg_bgm.msbt").unwrap();
+
+        //std::fs::write("msg_bgm.msbt", data).unwrap();
 
         //dbg!(arc.file_system.dirs.len());
-        arc.file_system.dirs.iter()
-            .for_each(|dir| {
-                
-            });
+    }
+
+    #[test]
+    fn test_get_dir() {
+        let arc = Arc::open("/home/jam/re/ult/900/data.arc").unwrap();
+        let dir_info = arc.get_dir_info_from_hash("fighter/mario").unwrap();
+
+        let start = dir_info.child_dir_start_index as usize;
+        let end = (dir_info.child_dir_start_index as usize) + (dir_info.child_dir_count as usize);
+
+        let children = &arc.file_system.folder_child_hashes[start..end].iter()
+            .map(|child| &arc.file_system.dirs[child.index() as usize])
+            .collect::<Vec<_>>();
+        let labels = crate::hash_labels::HashLabels::from_file("/home/jam/Downloads/hashes.txt");
+
+        for child in children {
+            eprint!("{} ", child.name.label(&labels).map(String::from).unwrap_or_else(|| format!("0x{:X}", child.name.as_u64())));
+            eprintln!("{}", child.parent.label(&labels).map(String::from).unwrap_or_else(|| format!("0x{:X}", child.parent.as_u64())));
+        }
+
+        dbg!(dir_info);
     }
 }
