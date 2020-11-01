@@ -1,7 +1,7 @@
 use modular_bitfield::prelude::*;
 use crate::Hash40;
 
-use binread::{
+use binrw::{
     BinRead,
     derive_binread,
     ReadOptions,

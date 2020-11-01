@@ -7,7 +7,7 @@ use std::{
     io::BufReader,
 };
 
-use binread::{
+use binrw::{
     BinRead,
     FilePtr64,
     BinResult,
