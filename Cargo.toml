@@ -14,7 +14,7 @@ zstd = { version = "0.5", optional = true }
 ruzstd = { git = "https://github.com/KillingSpark/zstd-rs", optional = true }
 
 [features]
-smash-runtime = ["rust-zstd"]
+smash-runtime = ["rust-zstd", "crc32fast/nightly"]
 
 # Recommended for use on platforms it builds for
 libzstd = ["zstd"]
