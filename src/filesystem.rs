@@ -277,22 +277,3 @@ pub struct FileDataFlags {
     pub use_zstd: bool,
     pub unk: B30,
 }
-
-// LoadedArc
-
-pub struct SearchSectionHeader {
-    pub section_size: u32,
-    // ..
-}
-
-pub struct SearchSectionBody {
-    pub file_info_count: u32,
-    pub file_info_indices_count: u32,
-    pub path_group_count: u32,
-}
-
-pub struct LoadedSearchSection {
-    pub search_header: *const SearchSectionHeader,
-    pub body: *const SearchSectionBody,
-    // ...
-}
