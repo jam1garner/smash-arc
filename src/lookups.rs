@@ -127,7 +127,7 @@ pub trait ArcLookup {
         let mut reader = Read::take(&mut reader, file_data.comp_size as u64);
 
         if file_data.flags.compressed() {
-            zstd::stream::copy_decode(reader, &mut data)?;
+            crate::zstd_backend::copy_decode(reader, &mut data)?;
         } else {
             io::copy(&mut reader, &mut data)?;
         }

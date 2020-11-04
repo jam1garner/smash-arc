@@ -19,6 +19,7 @@ mod hash40;
 mod lookups;
 mod filesystem;
 mod hash_labels;
+mod zstd_backend;
 
 pub use filesystem::*;
 pub use hash40::{hash40, Hash40};
