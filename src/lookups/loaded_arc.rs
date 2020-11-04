@@ -1,6 +1,13 @@
-use std::io::BufReader;
-use std::slice;
-use crate::*;
+use std::{
+    fs::File,
+    slice,
+    io::BufReader,
+};
+
+use crate::loaded_arc::LoadedArc;
+use crate::ArcLookup;
+use crate::SeekRead;
+use crate::filesystem::*;
 
 impl ArcLookup for LoadedArc {
     /// Requires testing
