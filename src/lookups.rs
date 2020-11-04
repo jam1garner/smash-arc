@@ -17,6 +17,8 @@ pub enum LookupError {
 }
 
 mod arc_file;
+#[cfg(feature = "smash-runtime")]
+mod loaded_arc;
 
 pub trait ArcLookup {
     fn get_file_info_buckets(&self) -> &[FileInfoBucket];
