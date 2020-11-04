@@ -1,4 +1,4 @@
-use binread::BinRead;
+use binrw::BinRead;
 use crate::{HashToIndex, DirInfo};
 
 #[derive(BinRead, Debug, Clone, Copy, PartialEq, Eq, Ord, PartialOrd, Hash)]

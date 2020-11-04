@@ -1,7 +1,7 @@
 use modular_bitfield::prelude::*;
 use crate::Hash40;
 
-use binread::{
+use binrw::{
     BinRead,
     derive_binread,
     ReadOptions,
@@ -84,7 +84,7 @@ pub struct FileSystem {
     pub dir_hash_to_info_index: Vec<HashToIndex>,
 
     #[br(count = fs_header.folder_count)]
-    pub dirs: Vec<DirInfo>,
+    pub dir_infos: Vec<DirInfo>,
     
     #[br(count = fs_header.folder_offset_count_1 + fs_header.folder_offset_count_2 + fs_header.extra_folder)]
     pub folder_offsets: Vec<DirectoryOffset>,
