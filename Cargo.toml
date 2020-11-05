@@ -5,13 +5,13 @@ authors = ["jam1garner <8260240+jam1garner@users.noreply.github.com>"]
 edition = "2018"
 
 [dependencies]
-binrw = { git = "https://github.com/jam1garner/binrw" }
+binread = "1.4"
 modular-bitfield = "0.9"
 thiserror = "1"
 crc32fast = "1.2"
 
 zstd = { version = "0.5", optional = true }
-ruzstd = { git = "https://github.com/KillingSpark/zstd-rs", optional = true }
+ruzstd = { version = "=0.2.2", optional = true }
 
 [features]
 smash-runtime = ["rust-zstd", "crc32fast/nightly"]
