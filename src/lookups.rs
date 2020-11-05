@@ -31,11 +31,26 @@ pub trait ArcLookup {
     fn get_file_info_to_datas(&self) -> &[FileInfoToFileData];
     fn get_file_datas(&self) -> &[FileData];
     fn get_folder_offsets(&self) -> &[DirectoryOffset];
-    fn get_file_section_offset(&self) -> u64;
+
+    fn get_stream_entries(&self) -> &[StreamEntry];
+    fn get_stream_file_indices(&self) -> &[u32];
+    fn get_stream_datas(&self) -> &[StreamData];
 
     fn get_file_reader<'a>(&'a self) -> Box<dyn SeekRead + 'a>;
-
+    fn get_file_section_offset(&self) -> u64;
+    fn get_stream_section_offset(&self) -> u64;
+    
     fn get_file_contents<Hash: Into<Hash40>>(&self, hash: Hash) -> Result<Vec<u8>, LookupError> {
+        let hash = hash.into();
+
+        self.get_nonstream_file_contents(hash)
+            .or_else(|err| match err {
+                LookupError::Missing => self.get_stream_file_contents(hash),
+                err => Err(err),
+            })
+    }
+
+    fn get_nonstream_file_contents<Hash: Into<Hash40>>(&self, hash: Hash) -> Result<Vec<u8>, LookupError> {
         fn inner<Arc: ArcLookup + ?Sized>(arc: &Arc, hash: Hash40) -> Result<Vec<u8>, LookupError> {
             let file_info = arc.get_file_info_from_hash(hash)?;
             let folder_offset = arc.get_folder_offset(file_info);
@@ -45,6 +60,40 @@ pub trait ArcLookup {
         }
 
         inner(self, hash.into())
+    }
+
+    fn get_stream_file_contents<Hash: Into<Hash40>>(&self, hash: Hash) -> Result<Vec<u8>, LookupError> {
+        fn inner<Arc: ArcLookup + ?Sized>(arc: &Arc, hash: Hash40) -> Result<Vec<u8>, LookupError> {
+            let stream_entries = arc.get_stream_entries();
+
+            let index = stream_entries.iter()
+                .find(|entry| entry.hash40() == hash)
+                .map(|entry| entry.index() as usize)
+                .ok_or(LookupError::Missing)?;
+            
+            let index = arc.get_stream_file_indices()[index] as usize;
+            let file_data = &arc.get_stream_datas()[index];
+            
+            arc.get_stream_file_data(file_data)
+        }
+
+        inner(self, hash.into())
+    }
+
+    fn get_stream_file_data(&self, file_data: &StreamData) -> Result<Vec<u8>, LookupError> {
+        let offset = file_data.offset + self.get_stream_section_offset();
+
+        let mut reader = self.get_file_reader();
+        reader.seek(SeekFrom::Start(offset))?;
+        
+        let mut data = Vec::with_capacity(file_data.size as usize);
+        let mut reader = Read::take(&mut reader, file_data.size as u64);
+        
+        if reader.read_to_end(&mut data)? as u64 == file_data.size {
+            Ok(data)
+        } else {
+            Err(LookupError::FileRead(io::Error::new(io::ErrorKind::UnexpectedEof, "Failed to read data")))
+        }
     }
 
     fn get_bucket_for_hash(&self, hash: Hash40) -> &[HashToIndex] {
@@ -162,6 +211,18 @@ mod tests {
         std::fs::write("bgm_property.bin", data).unwrap();
 
         //dbg!(arc.file_system.dirs.len());
+    }
+
+    #[test]
+    fn test_get_stream_file() {
+        let arc = ArcFile::open("/home/jam/re/ult/900/data.arc").unwrap();
+        
+        let labels = crate::hash_labels::HashLabels::from_file("/home/jam/Downloads/hashes.txt");
+        dbg!(arc.file_system.stream_entries[0].hash40().label(&labels));
+
+        let data = arc.get_file_contents("stream:/sound/bgm/bgm_a10_malrpg2_zarazarasabaku.nus3audio").unwrap();
+
+        std::fs::write("bgm_a10_malrpg2_zarazarasabaku.nus3audio", data).unwrap();
     }
 
     #[test]

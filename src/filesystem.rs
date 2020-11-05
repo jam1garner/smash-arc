@@ -60,7 +60,7 @@ pub struct FileSystem {
     pub stream_file_indices: Vec<u32>,
     
     #[br(count = stream_header.stream_offset_entry_count)]
-    pub stream_offset_entries: Vec<StreamOffsetEntry>,
+    pub stream_datas: Vec<StreamData>,
 
     #[br(temp)]
     pub hash_index_group_count: u32,
@@ -210,7 +210,7 @@ pub struct DirInfo {
 }
 
 #[derive(BinRead, Debug, Clone, Copy)]
-pub struct StreamOffsetEntry {
+pub struct StreamData {
     pub size: u64,
     pub offset: u64,
 }

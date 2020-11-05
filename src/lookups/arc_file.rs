@@ -42,8 +42,24 @@ impl ArcLookup for ArcFile {
         &self.file_system.folder_offsets
     }
 
+    fn get_stream_entries(&self) -> &[StreamEntry] {
+        &self.file_system.stream_entries
+    }
+
+    fn get_stream_file_indices(&self) -> &[u32] {
+        &self.file_system.stream_file_indices
+    }
+
+    fn get_stream_datas(&self) -> &[StreamData] {
+        &self.file_system.stream_datas
+    }
+
     fn get_file_section_offset(&self) -> u64 {
         self.file_section_offset
+    }
+
+    fn get_stream_section_offset(&self) -> u64 {
+        self.stream_section_offset
     }
 
     fn get_file_reader<'a>(&'a self) -> Box<dyn SeekRead + 'a> {
