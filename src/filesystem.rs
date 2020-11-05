@@ -51,7 +51,7 @@ pub struct FileSystem {
     pub quick_dirs: Vec<QuickDir>,
 
     #[br(count = stream_header.stream_hash_count)]
-    pub stream_hashes: Vec<Hash40>,
+    pub stream_hash_to_entries: Vec<HashToIndex>,
 
     #[br(count = stream_header.stream_hash_count)]
     pub stream_entries: Vec<StreamEntry>,

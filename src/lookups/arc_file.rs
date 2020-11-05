@@ -54,6 +54,14 @@ impl ArcLookup for ArcFile {
         &self.file_system.stream_datas
     }
 
+    fn get_stream_hash_to_entries(&self) -> &[HashToIndex] {
+        &self.file_system.stream_hash_to_entries
+    }
+
+    fn get_quick_dirs(&self) -> &[QuickDir] {
+        &self.file_system.quick_dirs
+    }
+
     fn get_file_section_offset(&self) -> u64 {
         self.file_section_offset
     }

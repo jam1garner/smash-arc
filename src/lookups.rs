@@ -35,6 +35,8 @@ pub trait ArcLookup {
     fn get_stream_entries(&self) -> &[StreamEntry];
     fn get_stream_file_indices(&self) -> &[u32];
     fn get_stream_datas(&self) -> &[StreamData];
+    fn get_quick_dirs(&self) -> &[QuickDir];
+    fn get_stream_hash_to_entries(&self) -> &[HashToIndex];
 
     fn get_file_reader<'a>(&'a self) -> Box<dyn SeekRead + 'a>;
     fn get_file_section_offset(&self) -> u64;
@@ -131,6 +133,21 @@ pub trait ArcLookup {
         inner(self, hash.into())
     }
 
+    fn get_stream_listing(&self, dir: &str) -> Result<&[HashToIndex], LookupError> {
+        let hash = match dir {
+            "bgm" | "smashappeal" | "movie" => crate::hash40::hash40(dir),
+            dir if dir.starts_with("stream:/sound") => crate::hash40::hash40(&dir[14..]),
+            "stream:/movie" => crate::hash40::hash40("movie"),
+            _ => return Err(LookupError::Missing)
+        };
+
+        self.get_quick_dirs()
+            .iter()
+            .find(|dir| dir.hash40() == hash)
+            .map(|dir| &self.get_stream_hash_to_entries()[dir.range()])
+            .ok_or(LookupError::Missing)
+    }
+
     fn get_file_info_from_path_index(&self, path_index: u32) -> &FileInfo {
         let index = self.get_file_paths()[path_index as usize].path.index() as usize;
         let index = self.get_file_info_indices()[index].file_info_index as usize;
@@ -185,6 +202,15 @@ pub trait ArcLookup {
     }
 }
 
+impl QuickDir {
+    fn range(&self) -> Range<usize> {
+        let start = self.index() as usize;
+        let end = start + self.count() as usize;
+
+        start..end
+    }
+}
+
 impl FileInfoBucket {
     fn range(&self) -> Range<usize> {
         let start = self.start as usize;
@@ -208,7 +234,7 @@ mod tests {
         let arc = ArcFile::open("/home/jam/re/ult/900/data.arc").unwrap();
         let data = arc.get_file_contents("sound/config/bgm_property.bin").unwrap();
 
-        std::fs::write("bgm_property.bin", data).unwrap();
+        //std::fs::write("bgm_property.bin", data).unwrap();
 
         //dbg!(arc.file_system.dirs.len());
     }
@@ -222,7 +248,7 @@ mod tests {
 
         let data = arc.get_file_contents("stream:/sound/bgm/bgm_a10_malrpg2_zarazarasabaku.nus3audio").unwrap();
 
-        std::fs::write("bgm_a10_malrpg2_zarazarasabaku.nus3audio", data).unwrap();
+        //std::fs::write("bgm_a10_malrpg2_zarazarasabaku.nus3audio", data).unwrap();
     }
 
     #[test]
@@ -244,5 +270,12 @@ mod tests {
         }
 
         dbg!(dir_info);
+    }
+
+    #[test]
+    fn test_print_quick_dir() {
+        let arc = ArcFile::open("/home/jam/re/ult/900/data.arc").unwrap();
+
+        dbg!(arc.get_stream_listing("stream:/sound/bgm").unwrap());
     }
 }

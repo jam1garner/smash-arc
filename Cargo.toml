@@ -6,7 +6,7 @@ edition = "2018"
 
 [dependencies]
 binread = "1.4"
-modular-bitfield = "0.9"
+modular-bitfield = "0.10"
 thiserror = "1"
 crc32fast = "1.2"
 

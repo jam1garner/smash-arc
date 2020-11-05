@@ -1,6 +1,6 @@
 use binread::BinRead;
 use crc32fast::Hasher;
-use crate::{HashToIndex, DirInfo, StreamEntry};
+use crate::{HashToIndex, DirInfo, StreamEntry, QuickDir};
 
 #[derive(BinRead, Debug, Clone, Copy, PartialEq, Eq, Ord, PartialOrd, Hash)]
 pub struct Hash40(pub u64);
@@ -70,6 +70,12 @@ impl StreamEntry {
 impl DirInfo {
     pub fn path_hash40(&self) -> Hash40 {
         Hash40((self.path_hash as u64) + ((self.dir_offset_index as u64) & 0xFF) << 32)
+    }
+}
+
+impl QuickDir {
+    pub fn hash40(&self) -> Hash40 {
+        Hash40((self.hash() as u64) + ((self.name_length() as u64) <<  32))
     }
 }
 
