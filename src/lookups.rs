@@ -133,7 +133,7 @@ pub trait ArcLookup {
         inner(self, hash.into())
     }
 
-    fn get_stream_listing(&self, dir: &str) -> Result<&[HashToIndex], LookupError> {
+    fn get_stream_listing(&self, dir: &str) -> Result<&[StreamEntry], LookupError> {
         let hash = match dir {
             "bgm" | "smashappeal" | "movie" => crate::hash40::hash40(dir),
             dir if dir.starts_with("stream:/sound") => crate::hash40::hash40(&dir[14..]),
@@ -144,7 +144,7 @@ pub trait ArcLookup {
         self.get_quick_dirs()
             .iter()
             .find(|dir| dir.hash40() == hash)
-            .map(|dir| &self.get_stream_hash_to_entries()[dir.range()])
+            .map(|dir| &self.get_stream_entries()[dir.range()])
             .ok_or(LookupError::Missing)
     }
 
@@ -273,9 +273,20 @@ mod tests {
     }
 
     #[test]
-    fn test_print_quick_dir() {
+    fn test_list_stream() {
         let arc = ArcFile::open("/home/jam/re/ult/900/data.arc").unwrap();
 
-        dbg!(arc.get_stream_listing("stream:/sound/bgm").unwrap());
+        let mut extensions = std::collections::HashSet::new();
+
+        let labels = crate::hash_labels::HashLabels::from_file("/home/jam/Downloads/hashes.txt");
+        for file in arc.get_stream_listing("stream:/sound/bgm").unwrap() {
+            if let Some(label) = file.hash40().label(&labels) {
+                extensions.insert(label.rsplit(".").next().unwrap());
+            }
+        }
+
+        assert_eq!(extensions.len(), 2);
+        assert!(extensions.contains("nus3audio"));
+        assert!(extensions.contains("nus3bank"));
     }
 }
