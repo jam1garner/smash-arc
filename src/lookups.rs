@@ -83,7 +83,7 @@ pub trait ArcLookup {
     }
 
     fn get_stream_file_data(&self, file_data: &StreamData) -> Result<Vec<u8>, LookupError> {
-        let offset = file_data.offset + self.get_stream_section_offset();
+        let offset = file_data.offset;
 
         let mut reader = self.get_file_reader();
         reader.seek(SeekFrom::Start(offset))?;
