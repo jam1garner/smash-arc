@@ -43,22 +43,20 @@ pub struct ArcFile {
 #[cfg(feature = "dir-listing")]
 fn parents_of_dir(dir: Hash40, labels: &HashLabels) -> Option<Vec<(Hash40, FileNode)>> {
     let mut label = dir.label(&labels)?;
-    if label.trim_end_matches('/').rfind('/').is_none() {
-        None
-    } else {
-        let mut hashes = Vec::new();
-        let mut last_hash = dir;
+    let mut hashes = Vec::new();
+    let mut last_hash = dir;
 
-        while let Some(len) = label.trim_end_matches('/').rfind('/') {
-            label = &label[..len];
+    while let Some(len) = label.trim_end_matches('/').rfind('/') {
+        label = &label[..len];
 
-            let hash = crate::hash40::hash40(label);
-            hashes.push((hash, FileNode::Dir(last_hash)));
-            last_hash = hash;
-        }
-
-        Some(hashes)
+        let hash = crate::hash40::hash40(label);
+        hashes.push((hash, FileNode::Dir(last_hash)));
+        last_hash = hash;
     }
+
+    hashes.push((crate::hash40::hash40("/"), FileNode::Dir(last_hash)));
+
+    Some(hashes)
 }
 
 #[cfg(feature = "dir-listing")]
@@ -124,7 +122,7 @@ mod tests {
                 }
                 FileNode::Dir(dir) => {
                     println!("L {}", dir.global_label().unwrap_or_else(|| format!("{:#x}", dir.as_u64())));
-                    print_tree_hash(arc, *dir, depth + 1);
+                    //print_tree_hash(arc, *dir, depth + 1);
                 }
             }
         }
@@ -140,7 +138,7 @@ mod tests {
         Hash40::set_global_labels_file("/home/jam/Downloads/hashes.txt");
         let arc = ArcFile::open("/home/jam/re/ult/900/data.arc").unwrap();
 
-        print_tree(&arc, "fighter/mario/");
+        print_tree(&arc, "/");
         //dbg!(arc.get_dir_listing("fighter/mario/model/body/c00/"));
     }
 }

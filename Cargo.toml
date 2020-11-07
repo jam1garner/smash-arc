@@ -4,6 +4,9 @@ version = "0.1.0"
 authors = ["jam1garner <8260240+jam1garner@users.noreply.github.com>"]
 edition = "2018"
 
+[lib]
+crate-type = ["lib", "cdylib"]
+
 [dependencies]
 binread = "1.4"
 modular-bitfield = "0.10"

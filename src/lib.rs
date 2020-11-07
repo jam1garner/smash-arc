@@ -5,6 +5,7 @@ mod lookups;
 mod filesystem;
 mod hash_labels;
 mod zstd_backend;
+mod ffi_bindings;
 
 #[cfg(feature = "smash-runtime")]
 mod loaded_arc;
@@ -12,10 +13,10 @@ mod arc_file;
 
 pub use arc_file::*;
 pub use filesystem::*;
-pub use hash40::{hash40, Hash40};
 pub use lookups::ArcLookup;
+pub use hash40::{hash40, Hash40};
 
-#[repr(C)]
+#[repr(C, u64)]
 #[derive(Debug, PartialEq, Ord, PartialOrd, Eq)]
 pub enum FileNode {
     Dir(Hash40),

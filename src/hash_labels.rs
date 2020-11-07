@@ -1,9 +1,8 @@
-use parking_lot::{RwLock, RwLockReadGuard, MappedRwLockReadGuard};
 use std::collections::HashMap;
 use std::path::Path;
-use std::ops::Deref;
 use std::fs;
 
+use parking_lot::RwLock;
 use crate::{hash40, Hash40};
 
 pub struct HashLabels {

@@ -2,6 +2,7 @@ use binread::BinRead;
 use crc32fast::Hasher;
 use crate::{HashToIndex, DirInfo, StreamEntry, QuickDir};
 
+#[repr(transparent)]
 #[derive(BinRead, Debug, Clone, Copy, PartialEq, Eq, Ord, PartialOrd, Hash)]
 pub struct Hash40(pub u64);
 

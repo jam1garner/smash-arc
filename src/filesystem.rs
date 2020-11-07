@@ -261,6 +261,7 @@ pub struct FileInfoToFileData {
     pub file_info_index_and_flag: u32,
 }
 
+#[repr(C)]
 #[derive(BinRead, Debug, Clone, Copy)]
 pub struct FileData {
     pub offset_in_folder: u32,
