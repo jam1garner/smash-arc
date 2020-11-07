@@ -1,5 +1,7 @@
+use parking_lot::{RwLock, RwLockReadGuard, MappedRwLockReadGuard};
 use std::collections::HashMap;
 use std::path::Path;
+use std::ops::Deref;
 use std::fs;
 
 use crate::{hash40, Hash40};
@@ -21,10 +23,38 @@ impl HashLabels {
 
         inner(path.as_ref())
     }
+
+    pub fn new() -> Self {
+        Self { labels: Default::default() }
+    }
 }
 
 impl Hash40 {
     pub fn label<'a>(&self, labels: &'a HashLabels) -> Option<&'a str> {
         labels.labels.get(self).map(|x| &**x)
     }
+    
+    pub fn global_label(&self) -> Option<String> {
+        GLOBAL_LABELS.read().labels.get(self).map(Clone::clone)
+    }
+    
+    //pub fn global_label<'a>(self) -> MappedRwLockReadGuard<'a, Option<&'a str>> {
+    //    RwLockReadGuard::map(
+    //        GLOBAL_LABELS.read(),
+    //        |labels| &labels.labels.get(&self).map(|x| &**x)
+    //    )
+    //}
+    
+    pub fn set_global_labels_file<P: AsRef<Path>>(label_file: P) {
+        Self::set_global_labels(HashLabels::from_file(label_file))
+    }
+
+    pub fn set_global_labels(labels: HashLabels) {
+        *GLOBAL_LABELS.write() = labels;
+    }
 }
+
+lazy_static::lazy_static! {
+    pub static ref GLOBAL_LABELS: RwLock<HashLabels> = RwLock::new(HashLabels::new());
+}
+

@@ -15,6 +15,13 @@ pub use filesystem::*;
 pub use hash40::{hash40, Hash40};
 pub use lookups::ArcLookup;
 
+#[repr(C)]
+#[derive(Debug, PartialEq, Ord, PartialOrd, Eq)]
+pub enum FileNode {
+    Dir(Hash40),
+    File(Hash40)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

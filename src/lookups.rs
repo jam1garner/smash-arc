@@ -220,11 +220,6 @@ impl FileInfoBucket {
     }
 }
 
-pub enum FileNode {
-    Dir(Hash40),
-    File(Hash40)
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
