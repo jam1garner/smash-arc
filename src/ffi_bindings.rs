@@ -41,7 +41,7 @@ pub unsafe extern "C" fn arc_free_file_contents(ffi: FfiBytes) {
 /// Extract a file to a given null-terminated path for the given Hash40
 #[no_mangle]
 pub extern "C" fn arc_get_file_info(arc: &ArcFile, hash: Hash40) -> Option<&FileData> {
-    Some(arc.get_file_data(arc.get_file_info_from_hash(hash).ok()?))
+    arc.get_file_data_from_hash(hash).ok()
 }
 
 /// Extract a file to a given null-terminated path for the given Hash40
@@ -85,6 +85,11 @@ pub unsafe extern "C" fn arc_hash40_to_str(hash: Hash40) -> *mut i8 {
 #[no_mangle]
 pub unsafe extern "C" fn arc_free_str(string: *mut i8) {
     std::ffi::CString::from_raw(string);
+}
+
+#[no_mangle]
+pub fn arc_get_file_metadata(arc: &ArcFile, hash: Hash40) -> crate::lookups::FileMetadata {
+    arc.get_file_metadata(hash).unwrap()
 }
 
 #[repr(u8)]

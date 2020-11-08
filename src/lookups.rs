@@ -41,6 +41,7 @@ pub trait ArcLookup {
     fn get_file_reader<'a>(&'a self) -> Box<dyn SeekRead + 'a>;
     fn get_file_section_offset(&self) -> u64;
     fn get_stream_section_offset(&self) -> u64;
+    fn get_shared_section_offset(&self) -> u64;
     
     fn get_file_contents<Hash: Into<Hash40>>(&self, hash: Hash) -> Result<Vec<u8>, LookupError> {
         let hash = hash.into();
@@ -64,25 +65,29 @@ pub trait ArcLookup {
         inner(self, hash.into())
     }
 
+    fn get_stream_data(&self, hash: Hash40) -> Result<&StreamData, LookupError> {
+        let stream_entries = self.get_stream_entries();
+
+        let index = stream_entries.iter()
+            .find(|entry| entry.hash40() == hash)
+            .map(|entry| entry.index() as usize)
+            .ok_or(LookupError::Missing)?;
+        
+        let index = self.get_stream_file_indices()[index] as usize;
+        
+        Ok(&self.get_stream_datas()[index])
+    }
+
     fn get_stream_file_contents<Hash: Into<Hash40>>(&self, hash: Hash) -> Result<Vec<u8>, LookupError> {
         fn inner<Arc: ArcLookup + ?Sized>(arc: &Arc, hash: Hash40) -> Result<Vec<u8>, LookupError> {
-            let stream_entries = arc.get_stream_entries();
-
-            let index = stream_entries.iter()
-                .find(|entry| entry.hash40() == hash)
-                .map(|entry| entry.index() as usize)
-                .ok_or(LookupError::Missing)?;
-            
-            let index = arc.get_stream_file_indices()[index] as usize;
-            let file_data = &arc.get_stream_datas()[index];
-            
-            arc.get_stream_file_data(file_data)
+            let file_data = arc.get_stream_data(hash)?;
+            arc.read_stream_file_data(file_data)
         }
 
         inner(self, hash.into())
     }
 
-    fn get_stream_file_data(&self, file_data: &StreamData) -> Result<Vec<u8>, LookupError> {
+    fn read_stream_file_data(&self, file_data: &StreamData) -> Result<Vec<u8>, LookupError> {
         let offset = file_data.offset;
 
         let mut reader = self.get_file_reader();
@@ -107,13 +112,17 @@ pub trait ArcLookup {
         bucket
     }
 
-    fn get_file_info_from_hash(&self, hash: Hash40) -> Result<&FileInfo, LookupError> {
+    fn get_file_path_index_from_hash(&self, hash: Hash40) -> Result<u32, LookupError> {
         let bucket = self.get_bucket_for_hash(hash);
         
         let index_in_bucket = bucket.binary_search_by_key(&hash, |group| group.hash40())
             .map_err(|_| LookupError::Missing)?;
 
-        let path_index = bucket[index_in_bucket].index();
+        Ok(bucket[index_in_bucket].index())
+    }
+
+    fn get_file_info_from_hash(&self, hash: Hash40) -> Result<&FileInfo, LookupError> {
+        let path_index = self.get_file_path_index_from_hash(hash)?;
         let file_info = self.get_file_info_from_path_index(path_index);
         
         Ok(file_info)
@@ -164,6 +173,10 @@ pub trait ArcLookup {
         }
     }
 
+    fn get_file_data_from_hash(&self, hash: Hash40) -> Result<&FileData, LookupError> {
+        Ok(self.get_file_data(self.get_file_info_from_hash(hash)?))
+    }
+
     fn get_file_data(&self, file_info: &FileInfo) -> &FileData {
         let file_in_folder = self.get_file_in_folder(file_info);
 
@@ -200,6 +213,80 @@ pub trait ArcLookup {
 
         Ok(data)
     }
+
+    fn get_file_metadata<Hash: Into<Hash40>>(&self, hash: Hash) -> Result<FileMetadata, LookupError> {
+        fn inner<Arc: ArcLookup + ?Sized>(arc: &Arc, hash: Hash40) -> Result<FileMetadata, LookupError> {
+            match arc.get_file_path_index_from_hash(hash) {
+                Ok(path_index) => {
+                    let file_path = &arc.get_file_paths()[path_index as usize];
+                    let file_info = arc.get_file_info_from_path_index(path_index);
+                    let folder_offset = arc.get_folder_offset(file_info);
+                    let file_data = arc.get_file_data(&file_info);
+
+                    let offset = folder_offset + arc.get_file_section_offset() + ((file_data.offset_in_folder as u64) <<  2);
+                    
+                    Ok(FileMetadata {
+                        path_hash: file_path.path.hash40(),
+                        ext_hash: file_path.ext.hash40(),
+                        parent_hash: file_path.parent.hash40(),
+                        file_name_hash: file_path.file_name.hash40(),
+                        offset,
+                        comp_size: file_data.comp_size as _,
+                        decomp_size: file_data.decomp_size as _,
+                        is_stream: false,
+                        is_shared: arc.get_shared_section_offset() < offset,
+                        is_redirect: file_info.flags.is_redirect(),
+                        is_regional: file_info.flags.is_regional(),
+                        is_localized: file_info.flags.is_localized(),
+                        is_compressed: file_data.flags.compressed(),
+                        uses_zstd: file_data.flags.use_zstd(),
+                    })
+                }
+                Err(LookupError::Missing) => {
+                    let stream_data = arc.get_stream_data(hash)?;
+
+                    Ok(FileMetadata {
+                        path_hash: hash,
+                        ext_hash: Hash40(0),
+                        parent_hash: Hash40(0),
+                        file_name_hash: Hash40(0),
+                        offset: stream_data.offset,
+                        comp_size: stream_data.size,
+                        decomp_size: stream_data.size,
+                        is_stream: true,
+                        is_shared: false,
+                        is_redirect: false,
+                        is_regional: false,
+                        is_localized: false,
+                        is_compressed: false,
+                        uses_zstd: false,
+                    })
+                }
+                Err(err) => Err(err)
+            }
+        }
+
+        inner(self, hash.into())
+    }
+}
+
+#[repr(C)]
+#[derive(Debug)]
+pub struct FileMetadata {
+    pub path_hash: Hash40,
+    pub ext_hash: Hash40,
+    pub parent_hash: Hash40,
+    pub file_name_hash: Hash40,
+    pub offset: u64,
+    pub comp_size: u64,
+    pub decomp_size: u64,
+    pub is_stream: bool,
+    pub is_shared: bool,
+    pub is_redirect: bool,
+    pub is_regional: bool,
+    pub is_localized: bool,
+    pub is_compressed: bool,
+    pub uses_zstd: bool,
 }
 
 impl QuickDir {
@@ -283,5 +370,15 @@ mod tests {
         assert_eq!(extensions.len(), 2);
         assert!(extensions.contains("nus3audio"));
         assert!(extensions.contains("nus3bank"));
+    }
+
+    #[test]
+    fn test_print_complete_data() {
+        let arc = ArcFile::open("/home/jam/re/ult/900/data.arc").unwrap();
+
+        dbg!(arc.get_complete_file_info("fighter/mewtwo/model/body/c00/model.numshb").unwrap());
+        dbg!(arc.get_complete_file_info("stage/battlefield/normal/model/ring_nocastshadow_set/battlefield_baked_f.nutexb").unwrap());
+        dbg!(arc.get_complete_file_info("fighter/jack/model/body/c00/model.numshb").unwrap());
+        dbg!(arc.get_complete_file_info("fighter/jack/model/body/c00/model.numdlb").unwrap());
     }
 }

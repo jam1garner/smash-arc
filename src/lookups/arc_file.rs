@@ -70,6 +70,10 @@ impl ArcLookup for ArcFile {
         self.stream_section_offset
     }
 
+    fn get_shared_section_offset(&self) -> u64 {
+        self.shared_section_offset
+    }
+
     fn get_file_reader<'a>(&'a self) -> Box<dyn SeekRead + 'a> {
         Box::new(MutexReader(self.reader.lock().unwrap()))
     }
