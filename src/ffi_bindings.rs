@@ -21,6 +21,12 @@ pub extern "C" fn arc_list_dir(arc: &ArcFile, hash: Hash40) -> DirListing {
     arc.get_dir_listing(hash).into()
 }
 
+/// Get a listing of all the children of a directory
+#[no_mangle]
+pub extern "C" fn arc_list_root_dir(arc: &ArcFile) -> DirListing {
+    arc.get_dir_listing("/").into()
+}
+
 /// Get an owned slice of the file contents for a given file
 #[no_mangle]
 pub extern "C" fn arc_get_file_contents(arc: &ArcFile, hash: Hash40) -> FfiBytes {
