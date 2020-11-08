@@ -55,6 +55,32 @@ pub unsafe extern "C" fn arc_extract_file(arc: &ArcFile, hash: Hash40, path: *co
     }
 }
 
+/// Load hash labels from a given path
+#[no_mangle]
+pub unsafe extern "C" fn arc_load_labels(path: *const i8) {
+    let path = std::ffi::CStr::from_ptr(path);
+    let path = path.to_string_lossy().into_owned();
+
+    Hash40::set_global_labels_file(path)
+}
+
+/// Get a label for a given Hash40
+///
+/// **Note:** Will return null if not found.
+#[no_mangle]
+pub unsafe extern "C" fn arc_hash40_to_str(hash: Hash40) -> *mut i8 {
+    let labels = crate::hash_labels::GLOBAL_LABELS.read();
+
+    hash.label(&labels)
+        .map(|string| std::ffi::CString::new(string).unwrap().into_raw())
+        .unwrap_or(std::ptr::null_mut())
+} 
+
+#[no_mangle]
+pub unsafe extern "C" fn arc_free_str(string: *mut i8) {
+    std::ffi::CString::from_raw(string);
+}
+
 #[repr(u8)]
 pub enum ExtractResult {
     Ok = 0,
