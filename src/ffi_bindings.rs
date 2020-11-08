@@ -92,6 +92,11 @@ pub fn arc_get_file_metadata(arc: &ArcFile, hash: Hash40) -> crate::lookups::Fil
     arc.get_file_metadata(hash).unwrap()
 }
 
+#[no_mangle]
+pub fn arc_get_file_count(arc: &ArcFile) -> u64 {
+    arc.file_system.file_paths.len() as u64 + arc.file_system.stream_entries.len() as u64
+}
+
 #[repr(u8)]
 pub enum ExtractResult {
     Ok = 0,
