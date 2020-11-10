@@ -4,6 +4,9 @@ use crate::*;
 ///
 /// **Note:** `Box<ArcFile>` is equivelant in layout to `*mut ArcFile`, but should be treated
 /// as an opaque pointer
+///
+/// **Note:** If you want directory listing to work, be sure to set a hashfile using
+/// [`arc_load_labels`](arc_load_labels)
 #[no_mangle]
 pub unsafe extern "C" fn arc_open(path: *const i8) -> Box<ArcFile> {
     let path = std::ffi::CStr::from_ptr(path);
