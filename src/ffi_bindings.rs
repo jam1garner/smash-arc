@@ -8,11 +8,11 @@ use crate::*;
 /// **Note:** If you want directory listing to work, be sure to set a hashfile using
 /// [`arc_load_labels`](arc_load_labels)
 #[no_mangle]
-pub unsafe extern "C" fn arc_open(path: *const i8) -> Box<ArcFile> {
+pub unsafe extern "C" fn arc_open(path: *const i8) -> Option<Box<ArcFile>> {
     let path = std::ffi::CStr::from_ptr(path);
     let path = path.to_string_lossy().into_owned();
 
-    Box::new(ArcFile::open(path).unwrap())
+    Some(Box::new(ArcFile::open(path).ok()?))
 }
 
 #[no_mangle]
