@@ -376,9 +376,9 @@ mod tests {
     fn test_print_complete_data() {
         let arc = ArcFile::open("/home/jam/re/ult/900/data.arc").unwrap();
 
-        dbg!(arc.get_complete_file_info("fighter/mewtwo/model/body/c00/model.numshb").unwrap());
-        dbg!(arc.get_complete_file_info("stage/battlefield/normal/model/ring_nocastshadow_set/battlefield_baked_f.nutexb").unwrap());
-        dbg!(arc.get_complete_file_info("fighter/jack/model/body/c00/model.numshb").unwrap());
-        dbg!(arc.get_complete_file_info("fighter/jack/model/body/c00/model.numdlb").unwrap());
+        dbg!(arc.get_file_metadata("fighter/mewtwo/model/body/c00/model.numshb").unwrap());
+        dbg!(arc.get_file_metadata("stage/battlefield/normal/model/ring_nocastshadow_set/battlefield_baked_f.nutexb").unwrap());
+        dbg!(arc.get_file_metadata("fighter/jack/model/body/c00/model.numshb").unwrap());
+        dbg!(arc.get_file_metadata("fighter/jack/model/body/c00/model.numdlb").unwrap());
     }
 }
