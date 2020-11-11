@@ -16,6 +16,14 @@ pub unsafe extern "C" fn arc_open(path: *const i8) -> Option<Box<ArcFile>> {
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn arc_open_networked(ip: *const i8) -> Option<Box<ArcFile>> {
+    let ip = std::ffi::CStr::from_ptr(ip);
+    let ip = ip.to_string_lossy().into_owned();
+
+    Some(Box::new(ArcFile::open_over_network((ip, 43022)).ok()?))
+}
+
+#[no_mangle]
 pub extern "C" fn arc_free(_: Box<ArcFile>) {}
 
 /// Get a listing of all the children of a directory

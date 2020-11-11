@@ -19,8 +19,11 @@ ruzstd = { version = "=0.2.2", optional = true }
 parking_lot = { version = "0.11", optional = true }
 lazy_static = { version = "1.4", optional = true }
 
+network-reader = { git = "https://github.com/jam1garner/network-reader.git", optional = true }
+
 [features]
-default = ["dir-listing"]
+default = ["dir-listing", "network"]
+network = ["network-reader"]
 dir-listing = ["global-hashes"]
 global-hashes = ["lazy_static", "parking_lot"]
 smash-runtime = ["rust-zstd", "crc32fast/nightly"]

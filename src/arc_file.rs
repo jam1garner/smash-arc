@@ -3,6 +3,7 @@ use std::{
     path::Path,
     sync::Mutex,
     io::BufReader,
+    net::ToSocketAddrs,
     collections::{HashMap, HashSet},
 };
 
@@ -95,6 +96,11 @@ impl ArcFile {
         Self::from_reader(BufReader::new(File::open(path)?))
     }
 
+    #[cfg(feature = "network")]
+    pub fn open_over_network<Addr: ToSocketAddrs>(ip: Addr) -> BinResult<Self> {
+        Self::from_reader(network_reader::NetworkReader::new(ip)?)
+    }
+
     pub fn from_reader<R: SeekRead + 'static>(mut reader: R) -> BinResult<Self> {
         let arc: Self = reader.read_le()?;
 
@@ -137,6 +143,7 @@ mod tests {
     fn test_listing() {
         Hash40::set_global_labels_file("/home/jam/Downloads/hashes.txt");
         let arc = ArcFile::open("/home/jam/re/ult/900/data.arc").unwrap();
+        //let arc = ArcFile::open_over_network(("192.168.86.32", 43022)).unwrap();
 
         print_tree(&arc, "/");
         //dbg!(arc.get_dir_listing("fighter/mario/model/body/c00/"));
