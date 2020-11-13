@@ -12,6 +12,7 @@ use crate::ArcFile;
 use crate::SeekRead;
 pub use crate::filesystem::*;
 
+#[repr(C)]
 pub struct LoadedArc {
     pub magic: u64,
     pub stream_section_offset: u64,
@@ -19,10 +20,10 @@ pub struct LoadedArc {
     pub shared_section_offset: u64,
     pub file_system_offset: u64,
     /// Not too sure about that one
-    pub patch_section_offset: u64,
-    /// Should be a FileSystem instead?
-    pub loaded_filesystem: *const FileSystemHeader,
-    pub loaded_filesystem_2: u64,
+    pub file_system_search_offset: u64,
+    pub padding: u64,
+    pub uncompressed_fs: *const FileSystemHeader,
+    pub fs_header: *const FileSystemHeader,
     /// Not too sure about that one
     pub region_entry: u64,
     pub file_info_buckets: *const FileInfoBucket,
@@ -38,15 +39,16 @@ pub struct LoadedArc {
     pub file_datas: *const FileData,
     pub unk_section: u64,
     pub stream_header: *const StreamHeader,
-    pub stream_unk: u64,
-    pub stream_hash_to_name: u64,
-    pub stream_name_to_hash: u64,
-    pub stream_index_to_offset: u64,
-    pub stream_offset: *const StreamOffsetEntry,
-    pub extra_buckets: u64,
+    pub quick_dirs: *const QuickDir,
+    pub stream_hash_to_entries: *const HashToIndex,
+    pub stream_entries: *const StreamEntry,
+    pub stream_file_indices: *const u64,
+    pub stream_datas: *const StreamData,
+    pub extra_buckets: *const FileInfoBucket,
     pub extra_entries: u64,
     pub extra_folder_offsets: *const DirectoryOffset,
-    pub extra_entry_vector: u64,
+    // CppVector
+    pub extra_entry_vector: [u64;3],
     pub version: u32,
     pub extra_count: u32,
     pub loaded_file_system_search: *const LoadedSearchSection,
@@ -67,17 +69,20 @@ impl LoadedArc {
     }
 }
 
+#[repr(C)]
 pub struct SearchSectionHeader {
     pub section_size: u32,
     // ..
 }
 
+#[repr(C)]
 pub struct SearchSectionBody {
     pub file_info_count: u32,
     pub file_info_indices_count: u32,
     pub path_group_count: u32,
 }
 
+#[repr(C)]
 pub struct LoadedSearchSection {
     pub search_header: *const SearchSectionHeader,
     pub body: *const SearchSectionBody,
