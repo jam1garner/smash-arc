@@ -11,6 +11,9 @@ mod ffi_bindings;
 mod loaded_arc;
 mod arc_file;
 
+#[cfg(feature = "smash-runtime")]
+pub use loaded_arc::*;
+
 pub use arc_file::*;
 pub use filesystem::*;
 pub use lookups::ArcLookup;
