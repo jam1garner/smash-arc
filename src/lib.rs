@@ -15,6 +15,7 @@ pub use arc_file::*;
 pub use filesystem::*;
 pub use lookups::ArcLookup;
 pub use hash40::{hash40, Hash40};
+pub use hash_labels::{GLOBAL_LABELS, HashLabels};
 
 #[repr(C, u64)]
 #[derive(Debug, PartialEq, Ord, PartialOrd, Eq)]
