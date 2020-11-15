@@ -21,8 +21,8 @@ impl ArcLookup for LoadedArc {
     /// Most likely incorrect
     fn get_file_hash_to_path_index(&self) -> &[HashToIndex] {
         unsafe {
-            // Temporary
-            let table_size = 555194;
+            let fs = *self.fs_header;
+            let table_size = fs.file_info_path_count;
             slice::from_raw_parts(self.file_hash_to_path_index, table_size as _)
         }
     }
@@ -92,35 +92,55 @@ impl ArcLookup for LoadedArc {
     }
 
     fn get_stream_entries(&self) -> &[StreamEntry] {
-        unimplemented!();
+        unsafe {
+            let stream = &*self.stream_header;
+            let table_size = stream.stream_hash_count;
+            slice::from_raw_parts(self.stream_entries, table_size as _)
+        }
     }
 
     fn get_stream_file_indices(&self) -> &[u32] {
-        unimplemented!();
+        unsafe {
+            let stream = &*self.stream_header;
+            let table_size = stream.stream_file_index_count;
+            slice::from_raw_parts(self.stream_file_indices, table_size as _)
+        }
     }
 
     fn get_stream_datas(&self) -> &[StreamData] {
-        unimplemented!();
+        unsafe {
+            let stream = &*self.stream_header;
+            let table_size = stream.stream_offset_entry_count;
+            slice::from_raw_parts(self.stream_datas, table_size as _)
+        }
     }
 
     fn get_stream_hash_to_entries(&self) -> &[HashToIndex] {
-        unimplemented!();
+        unsafe {
+            let stream = &*self.stream_header;
+            let table_size = stream.stream_hash_count;
+            slice::from_raw_parts(self.stream_hash_to_entries, table_size as _)
+        }
     }
 
     fn get_quick_dirs(&self) -> &[QuickDir] {
-        unimplemented!();
+        unsafe {
+            let stream = &*self.stream_header;
+            let table_size = stream.quick_dir_count;
+            slice::from_raw_parts(self.quick_dirs, table_size as _)
+        }
     }
 
     fn get_file_section_offset(&self) -> u64 {
-        unimplemented!();
+        self.file_section_offset
     }
 
     fn get_stream_section_offset(&self) -> u64 {
-        unimplemented!();
+        self.stream_section_offset
     }
 
     fn get_shared_section_offset(&self) -> u64 {
-        unimplemented!();
+        self.shared_section_offset
     }
 
     fn get_file_reader<'a>(&'a self) -> Box<dyn SeekRead + 'a> {
