@@ -16,7 +16,7 @@ pub use loaded_arc::*;
 
 pub use arc_file::*;
 pub use filesystem::*;
-pub use lookups::ArcLookup;
+pub use lookups::{ArcLookup, LookupError};
 pub use hash40::{hash40, Hash40};
 pub use hash_labels::{GLOBAL_LABELS, HashLabels};
 

@@ -29,6 +29,8 @@ impl BinRead for CompressedFileSystem {
 
         let mut compressed = vec![0; header.comp_size as usize];
 
+        dbg!(header.comp_size);
+
         reader.read_exact(&mut compressed)?;
 
         let compressed = Cursor::new(compressed);

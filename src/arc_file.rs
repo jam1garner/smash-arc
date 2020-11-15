@@ -146,8 +146,8 @@ mod tests {
     #[test]
     fn test_listing() {
         Hash40::set_global_labels_file("/home/jam/Downloads/hashes.txt");
-        //let arc = ArcFile::open("/home/jam/re/ult/900/data.arc").unwrap();
-        let arc = ArcFile::open_over_network(("192.168.86.32", 43022)).unwrap();
+        let arc = ArcFile::open("/home/jam/re/ult/900/data.arc").unwrap();
+        //let arc = ArcFile::open_over_network(("192.168.86.32", 43022)).unwrap();
 
         print_tree(&arc, "/");
         //dbg!(arc.get_dir_listing("fighter/mario/model/body/c00/"));
