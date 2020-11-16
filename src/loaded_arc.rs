@@ -13,6 +13,7 @@ use crate::SeekRead;
 pub use crate::filesystem::*;
 
 #[repr(C)]
+#[derive(Debug)]
 pub struct LoadedArc {
     pub magic: u64,
     pub stream_section_offset: u64,
@@ -42,7 +43,7 @@ pub struct LoadedArc {
     pub quick_dirs: *const QuickDir,
     pub stream_hash_to_entries: *const HashToIndex,
     pub stream_entries: *const StreamEntry,
-    pub stream_file_indices: *const u64,
+    pub stream_file_indices: *const u32,
     pub stream_datas: *const StreamData,
     pub extra_buckets: *const FileInfoBucket,
     pub extra_entries: u64,
