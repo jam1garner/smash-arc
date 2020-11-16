@@ -42,15 +42,16 @@ pub struct ArcFile {
 }
 
 #[cfg(feature = "dir-listing")]
-fn parents_of_dir(dir: Hash40, labels: &HashLabels) -> Option<Vec<(Hash40, FileNode)>> {
-    let mut label = dir.label(&labels)?;
+fn parents_of_dir(dir: Hash40, labels: &mut HashLabels) -> Option<Vec<(Hash40, FileNode)>> {
+    let label = dir.label(&labels)?.to_owned();
+    let mut label = &label[..];
     let mut hashes = Vec::new();
     let mut last_hash = dir;
 
     while let Some(len) = label.trim_end_matches('/').rfind('/') {
         label = &label[..len];
 
-        let hash = crate::hash40::hash40(label);
+        let hash = labels.add_label(label);
         hashes.push((hash, FileNode::Dir(last_hash)));
         last_hash = hash;
     }
@@ -61,7 +62,7 @@ fn parents_of_dir(dir: Hash40, labels: &HashLabels) -> Option<Vec<(Hash40, FileN
 }
 
 #[cfg(feature = "dir-listing")]
-fn dir_listing_flat<'a>(fs: &'a FileSystem, labels: &'a HashLabels) -> impl Iterator<Item = (Hash40, FileNode)> + 'a {
+fn dir_listing_flat<'a>(fs: &'a FileSystem, labels: &'a mut HashLabels) -> impl Iterator<Item = (Hash40, FileNode)> + 'a {
     let dirs: HashSet<_> = fs.file_paths.iter().map(|path| path.parent.hash40()).collect();
 
     // Generate parents for directories
@@ -79,8 +80,8 @@ fn dir_listing_flat<'a>(fs: &'a FileSystem, labels: &'a HashLabels) -> impl Iter
 fn generate_dir_listing(fs: &FileSystem) -> HashMap<Hash40, Vec<FileNode>> {
     let mut dirs = HashMap::new();
 
-    let labels = crate::hash_labels::GLOBAL_LABELS.read();
-    for (parent, child) in dir_listing_flat(fs, &labels) {
+    let mut labels = crate::hash_labels::GLOBAL_LABELS.write();
+    for (parent, child) in dir_listing_flat(fs, &mut labels) {
         let listing = dirs.entry(parent).or_insert_with(Vec::new);
         match listing.binary_search(&child) {
             Ok(_) => (),

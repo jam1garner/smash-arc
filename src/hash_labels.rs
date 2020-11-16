@@ -14,13 +14,21 @@ impl HashLabels {
         fn inner(path: &Path) -> HashLabels {
             HashLabels {
                 labels: fs::read_to_string(path).unwrap()
-                .split('\n')
-                .map(|line| (hash40(&line), line.to_owned()))
-                .collect()
+                    .split('\n')
+                    .map(|line| (hash40(&line), line.to_owned()))
+                    .collect()
             }
         }
 
         inner(path.as_ref())
+    }
+
+    pub(crate) fn add_label<S: Into<String>>(&mut self, label: S) -> Hash40 {
+        let label = label.into();
+        let hash = hash40(&label);
+        self.labels.insert(hash, label);
+
+        hash
     }
 
     pub fn new() -> Self {
