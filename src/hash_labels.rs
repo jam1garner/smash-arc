@@ -10,14 +10,14 @@ pub struct HashLabels {
 }
 
 impl HashLabels {
-    pub fn from_file<P: AsRef<Path>>(path: P) -> Self {
-        fn inner(path: &Path) -> HashLabels {
-            HashLabels {
-                labels: fs::read_to_string(path).unwrap()
+    pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self, std::io::Error> {
+        fn inner(path: &Path) -> Result<HashLabels, std::io::Error> {
+            Ok(HashLabels {
+                labels: fs::read_to_string(path)?
                     .split('\n')
                     .map(|line| (hash40(&line), line.to_owned()))
                     .collect()
-            }
+            })
         }
 
         inner(path.as_ref())
@@ -52,8 +52,8 @@ impl Hash40 {
     //    )
     //}
     
-    pub fn set_global_labels_file<P: AsRef<Path>>(label_file: P) {
-        Self::set_global_labels(HashLabels::from_file(label_file))
+    pub fn set_global_labels_file<P: AsRef<Path>>(label_file: P) -> Result<(), std::io::Error> {
+        Ok(Self::set_global_labels(HashLabels::from_file(label_file)?))
     }
 
     pub fn set_global_labels(labels: HashLabels) {

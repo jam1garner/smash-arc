@@ -325,7 +325,7 @@ mod tests {
     fn test_get_stream_file() {
         let arc = ArcFile::open("/home/jam/re/ult/900/data.arc").unwrap();
         
-        let labels = crate::hash_labels::HashLabels::from_file("/home/jam/Downloads/hashes.txt");
+        let labels = crate::hash_labels::HashLabels::from_file("/home/jam/Downloads/hashes.txt").unwrap();
         dbg!(arc.file_system.stream_entries[0].hash40().label(&labels));
 
         let data = arc.get_file_contents("stream:/sound/bgm/bgm_a10_malrpg2_zarazarasabaku.nus3audio").unwrap();
@@ -344,7 +344,7 @@ mod tests {
         let children = &arc.file_system.folder_child_hashes[start..end].iter()
             .map(|child| &arc.file_system.dir_infos[child.index() as usize])
             .collect::<Vec<_>>();
-        let labels = crate::hash_labels::HashLabels::from_file("/home/jam/Downloads/hashes.txt");
+        let labels = crate::hash_labels::HashLabels::from_file("/home/jam/Downloads/hashes.txt").unwrap();
 
         for child in children {
             eprint!("{} ", child.name.label(&labels).map(String::from).unwrap_or_else(|| format!("0x{:X}", child.name.as_u64())));
@@ -360,7 +360,7 @@ mod tests {
 
         let mut extensions = std::collections::HashSet::new();
 
-        let labels = crate::hash_labels::HashLabels::from_file("/home/jam/Downloads/hashes.txt");
+        let labels = crate::hash_labels::HashLabels::from_file("/home/jam/Downloads/hashes.txt").unwrap();
         for file in arc.get_stream_listing("stream:/sound/bgm").unwrap() {
             if let Some(label) = file.hash40().label(&labels) {
                 extensions.insert(label.rsplit(".").next().unwrap());

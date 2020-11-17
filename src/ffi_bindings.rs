@@ -72,13 +72,17 @@ pub unsafe extern "C" fn arc_extract_file(arc: &ArcFile, hash: Hash40, path: *co
     }
 }
 
-/// Load hash labels from a given path
+/// Load hash labels from a given path. 
+/// Returns true on success.
 #[no_mangle]
-pub unsafe extern "C" fn arc_load_labels(path: *const i8) {
+pub unsafe extern "C" fn arc_load_labels(path: *const i8) -> bool {
     let path = std::ffi::CStr::from_ptr(path);
     let path = path.to_string_lossy().into_owned();
 
-    Hash40::set_global_labels_file(path)
+    match Hash40::set_global_labels_file(path) {
+        Ok(_) => true,
+        Err(_) => false
+    }
 }
 
 /// Get a label for a given Hash40
