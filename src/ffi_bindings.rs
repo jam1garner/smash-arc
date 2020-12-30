@@ -55,6 +55,18 @@ pub extern "C" fn arc_get_file_info(arc: &ArcFile, hash: Hash40) -> Option<&File
     arc.get_file_data_from_hash(hash).ok()
 }
 
+/// Get an owned list of shared files for a file, given its hash
+#[no_mangle]
+pub extern "C" fn arc_get_shared_files(arc: &ArcFile, hash: Hash40) -> FfiVec<Hash40> {
+    arc.get_shared_files(hash).ok().into()
+}
+
+/// Free an owned list of shared files
+#[no_mangle]
+pub unsafe extern "C" fn arc_free_shared_file_list(ffi: FfiVec<Hash40>) {
+    Box::from_raw(std::slice::from_raw_parts_mut(ffi.ptr, ffi.size));
+}
+
 /// Extract a file to a given null-terminated path for the given Hash40
 #[no_mangle]
 pub unsafe extern "C" fn arc_extract_file(arc: &ArcFile, hash: Hash40, path: *const i8) -> ExtractResult {
@@ -119,20 +131,22 @@ pub enum ExtractResult {
     Missing = 2,
 }
 
+type FfiBytes = FfiVec<u8>;
+
 /// An owned slice of bytes
 #[repr(C)]
-pub struct FfiBytes {
+pub struct FfiVec<T: Sized> {
     /// May be null on error
-    ptr: *mut u8,
+    ptr: *mut T,
     size: usize,
 }
 
-impl From<Option<Vec<u8>>> for FfiBytes {
-    fn from(bytes: Option<Vec<u8>>) -> Self {
-        match bytes {
-            Some(bytes) => {
-                let size = bytes.len();
-                let ptr = Box::leak(bytes.into_boxed_slice()).as_mut_ptr();
+impl<T: Sized> From<Option<Vec<T>>> for FfiVec<T> {
+    fn from(list: Option<Vec<T>>) -> Self {
+        match list {
+            Some(list) => {
+                let size = list.len();
+                let ptr = Box::leak(list.into_boxed_slice()).as_mut_ptr();
 
                 Self { ptr, size }
             }

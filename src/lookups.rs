@@ -102,6 +102,36 @@ pub trait ArcLookup {
             Err(LookupError::FileRead(io::Error::new(io::ErrorKind::UnexpectedEof, "Failed to read data")))
         }
     }
+    
+    fn get_shared_files(&self, hash: Hash40) -> Result<Vec<Hash40>, LookupError> {
+        let metadata = self.get_file_metadata(hash)?;
+
+        if metadata.is_shared {
+            let hash_to_paths = self.get_file_hash_to_path_index();
+
+            let file_data_index = self.get_file_in_folder(
+                self.get_file_info_from_hash(hash)?
+            ).file_data_index;
+
+            Ok(
+                hash_to_paths
+                    .iter()
+                    .filter_map(|hash_to_path| {
+                        let hash = hash_to_path.hash40();
+                        let file_info = self.get_file_info_from_hash(hash).ok()?;
+                        let file_in_folder = self.get_file_in_folder(file_info);
+                        if file_in_folder.file_data_index == file_data_index {
+                            Some(hash)
+                        } else {
+                            None
+                        }
+                    })
+                    .collect()
+            )
+        } else {
+            Ok(Vec::from([]))
+        }
+    }
 
     fn get_bucket_for_hash(&self, hash: Hash40) -> &[HashToIndex] {
         let file_info_buckets = self.get_file_info_buckets();
@@ -212,6 +242,16 @@ pub trait ArcLookup {
         }
 
         Ok(data)
+    }
+
+    fn get_file_offset_from_hash(&self, hash: Hash40) -> Result<u64, LookupError> {
+        let path_index = self.get_file_path_index_from_hash(hash)?;
+        let file_info = self.get_file_info_from_path_index(path_index);
+        let folder_offset = self.get_folder_offset(file_info);
+        let file_data = self.get_file_data(&file_info);
+        let offset = folder_offset + self.get_file_section_offset() + ((file_data.offset_in_folder as u64) <<  2);
+
+        Ok(offset)
     }
 
     fn get_file_metadata<Hash: Into<Hash40>>(&self, hash: Hash) -> Result<FileMetadata, LookupError> {
@@ -331,6 +371,24 @@ mod tests {
         let data = arc.get_file_contents("stream:/sound/bgm/bgm_a10_malrpg2_zarazarasabaku.nus3audio").unwrap();
 
         //std::fs::write("bgm_a10_malrpg2_zarazarasabaku.nus3audio", data).unwrap();
+    }
+
+    #[test]
+    fn test_get_shared() {
+        let hash: Hash40 = "fighter/mario/model/body/c00/leyes_eye_mario_l_col.nutexb".into();
+
+
+        let labels = crate::hash_labels::HashLabels::from_file("/home/jam/Downloads/hashes.txt").unwrap();
+        dbg!(hash.label(&labels));
+
+        let arc = ArcFile::open("/home/jam/re/ult/900/data.arc").unwrap();
+        let shared_files = arc.get_shared_files(hash).unwrap();
+
+        let shared_files: Vec<Option<&str>> = shared_files.into_iter()
+            .map(|hash| hash.label(&labels))
+            .collect();
+
+        dbg!(shared_files);
     }
 
     #[test]
