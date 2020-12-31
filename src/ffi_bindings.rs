@@ -32,6 +32,12 @@ pub extern "C" fn arc_list_dir(arc: &ArcFile, hash: Hash40) -> DirListing {
     arc.get_dir_listing(hash).into()
 }
 
+/// Get the file version of the ARC.
+#[no_mangle]
+pub extern "C" fn arc_get_version(arc: &ArcFile) -> u32 {
+    arc.file_system.fs_header.version
+}
+
 /// Get a listing of all the children of a directory
 #[no_mangle]
 pub extern "C" fn arc_list_root_dir(arc: &ArcFile) -> DirListing {
