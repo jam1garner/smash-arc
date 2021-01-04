@@ -26,10 +26,13 @@ default = ["dir-listing", "network"]
 network = ["network-reader"]
 dir-listing = ["global-hashes"]
 global-hashes = ["lazy_static", "parking_lot"]
-smash-runtime = ["rust-zstd", "crc32fast/nightly"]
+smash-runtime = ["crc32fast/nightly"]
 
 # Recommended for use on platforms it builds for
 libzstd = ["zstd"]
 
 # Increased portability (Recommended for use on switch)
 rust-zstd = ["ruzstd"]
+
+# If you really don't need zstd of any form
+nozstd = []
