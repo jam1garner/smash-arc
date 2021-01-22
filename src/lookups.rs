@@ -1,7 +1,8 @@
+use crate::*;
 use std::ops::Range;
 use std::io::{self, SeekFrom, Read, Seek};
-use crate::*;
 
+use region::Region;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
@@ -47,26 +48,26 @@ pub trait ArcLookup {
     fn get_file_infos_mut(&mut self) -> &mut [FileInfo];
     fn get_file_datas_mut(&mut self) -> &mut [FileData];
     
-    fn get_file_contents<Hash: Into<Hash40>>(&self, hash: Hash) -> Result<Vec<u8>, LookupError> {
+    fn get_file_contents<Hash: Into<Hash40>>(&self, hash: Hash, region: Region) -> Result<Vec<u8>, LookupError> {
         let hash = hash.into();
 
-        self.get_nonstream_file_contents(hash)
+        self.get_nonstream_file_contents(hash, region)
             .or_else(|err| match err {
                 LookupError::Missing => self.get_stream_file_contents(hash),
                 err => Err(err),
             })
     }
 
-    fn get_nonstream_file_contents<Hash: Into<Hash40>>(&self, hash: Hash) -> Result<Vec<u8>, LookupError> {
-        fn inner<Arc: ArcLookup + ?Sized>(arc: &Arc, hash: Hash40) -> Result<Vec<u8>, LookupError> {
+    fn get_nonstream_file_contents<Hash: Into<Hash40>>(&self, hash: Hash, region: Region) -> Result<Vec<u8>, LookupError> {
+        fn inner<Arc: ArcLookup + ?Sized>(arc: &Arc, hash: Hash40, region: Region) -> Result<Vec<u8>, LookupError> {
             let file_info = arc.get_file_info_from_hash(hash)?;
-            let folder_offset = arc.get_folder_offset(file_info);
-            let file_data = arc.get_file_data(file_info);
+            let folder_offset = arc.get_folder_offset(file_info, region);
+            let file_data = arc.get_file_data(file_info, region);
 
             arc.read_file_data(&file_data, folder_offset)
         }
 
-        inner(self, hash.into())
+        inner(self, hash.into(), region)
     }
 
     fn get_stream_data(&self, hash: Hash40) -> Result<&StreamData, LookupError> {
@@ -107,14 +108,15 @@ pub trait ArcLookup {
         }
     }
     
-    fn get_shared_files(&self, hash: Hash40) -> Result<Vec<Hash40>, LookupError> {
-        let metadata = self.get_file_metadata(hash)?;
+    fn get_shared_files(&self, hash: Hash40, region: Region) -> Result<Vec<Hash40>, LookupError> {
+        let metadata = self.get_file_metadata(hash, region)?;
 
         if metadata.is_shared {
             let hash_to_paths = self.get_file_hash_to_path_index();
 
             let file_data_index = self.get_file_in_folder(
-                self.get_file_info_from_hash(hash)?
+                self.get_file_info_from_hash(hash)?,
+                Region::UsEnglish
             ).file_data_index;
 
             Ok(
@@ -123,7 +125,7 @@ pub trait ArcLookup {
                     .filter_map(|hash_to_path| {
                         let hash = hash_to_path.hash40();
                         let file_info = self.get_file_info_from_hash(hash).ok()?;
-                        let file_in_folder = self.get_file_in_folder(file_info);
+                        let file_in_folder = self.get_file_in_folder(file_info, Region::UsEnglish);
                         if file_in_folder.file_data_index == file_data_index {
                             Some(hash)
                         } else {
@@ -207,7 +209,7 @@ pub trait ArcLookup {
         file_info
     }
 
-    fn get_file_in_folder(&self, file_info: &FileInfo) -> FileInfoToFileData {
+    fn get_file_in_folder(&self, file_info: &FileInfo, region: Region) -> FileInfoToFileData {
         if file_info.flags.is_regional() {
             self.get_file_info_to_datas()[file_info.info_to_data_index as usize + 2]
         } else {
@@ -215,24 +217,24 @@ pub trait ArcLookup {
         }
     }
 
-    fn get_file_data_from_hash(&self, hash: Hash40) -> Result<&FileData, LookupError> {
-        Ok(self.get_file_data(self.get_file_info_from_hash(hash)?))
+    fn get_file_data_from_hash(&self, hash: Hash40, region: Region) -> Result<&FileData, LookupError> {
+        Ok(self.get_file_data(self.get_file_info_from_hash(hash)?, region))
     }
 
-    fn get_file_data(&self, file_info: &FileInfo) -> &FileData {
-        let file_in_folder = self.get_file_in_folder(file_info);
+    fn get_file_data(&self, file_info: &FileInfo, region: Region) -> &FileData {
+        let file_in_folder = self.get_file_in_folder(file_info, region);
 
         &self.get_file_datas()[file_in_folder.file_data_index as usize]
     }
 
-    fn get_file_data_mut(&mut self, file_info: &FileInfo) -> &mut FileData {
-        let file_in_folder = self.get_file_in_folder(file_info);
+    fn get_file_data_mut(&mut self, file_info: &FileInfo, region: Region) -> &mut FileData {
+        let file_in_folder = self.get_file_in_folder(file_info, region);
 
         &mut self.get_file_datas_mut()[file_in_folder.file_data_index as usize]
     }
 
-    fn get_folder_offset(&self, file_info: &FileInfo) -> u64 {
-        let file_in_folder = self.get_file_in_folder(file_info);
+    fn get_folder_offset(&self, file_info: &FileInfo, region: Region) -> u64 {
+        let file_in_folder = self.get_file_in_folder(file_info, region);
 
         let folder_offset = self.get_folder_offsets()[file_in_folder.folder_offset_index as usize].offset;
 
@@ -262,24 +264,24 @@ pub trait ArcLookup {
         Ok(data)
     }
 
-    fn get_file_offset_from_hash(&self, hash: Hash40) -> Result<u64, LookupError> {
+    fn get_file_offset_from_hash(&self, hash: Hash40, region: Region) -> Result<u64, LookupError> {
         let path_index = self.get_file_path_index_from_hash(hash)?;
         let file_info = self.get_file_info_from_path_index(path_index);
-        let folder_offset = self.get_folder_offset(file_info);
-        let file_data = self.get_file_data(&file_info);
+        let folder_offset = self.get_folder_offset(file_info, region);
+        let file_data = self.get_file_data(&file_info, region);
         let offset = folder_offset + self.get_file_section_offset() + ((file_data.offset_in_folder as u64) <<  2);
 
         Ok(offset)
     }
 
-    fn get_file_metadata<Hash: Into<Hash40>>(&self, hash: Hash) -> Result<FileMetadata, LookupError> {
-        fn inner<Arc: ArcLookup + ?Sized>(arc: &Arc, hash: Hash40) -> Result<FileMetadata, LookupError> {
+    fn get_file_metadata<Hash: Into<Hash40>>(&self, hash: Hash, region: Region) -> Result<FileMetadata, LookupError> {
+        fn inner<Arc: ArcLookup + ?Sized>(arc: &Arc, hash: Hash40, region: Region) -> Result<FileMetadata, LookupError> {
             match arc.get_file_path_index_from_hash(hash) {
                 Ok(path_index) => {
                     let file_path = &arc.get_file_paths()[path_index as usize];
                     let file_info = arc.get_file_info_from_path_index(path_index);
-                    let folder_offset = arc.get_folder_offset(file_info);
-                    let file_data = arc.get_file_data(&file_info);
+                    let folder_offset = arc.get_folder_offset(file_info, region);
+                    let file_data = arc.get_file_data(&file_info, region);
 
                     let offset = folder_offset + arc.get_file_section_offset() + ((file_data.offset_in_folder as u64) <<  2);
                     
@@ -324,7 +326,7 @@ pub trait ArcLookup {
             }
         }
 
-        inner(self, hash.into())
+        inner(self, hash.into(), region)
     }
 }
 
@@ -372,7 +374,7 @@ mod tests {
     #[test]
     fn test_get_file_data() {
         let arc = ArcFile::open("/home/jam/re/ult/900/data.arc").unwrap();
-        let data = arc.get_file_contents("sound/config/bgm_property.bin").unwrap();
+        let data = arc.get_file_contents("sound/config/bgm_property.bin", Region::UsEnglish).unwrap();
 
         //std::fs::write("bgm_property.bin", data).unwrap();
 
@@ -386,7 +388,7 @@ mod tests {
         let labels = crate::hash_labels::HashLabels::from_file("/home/jam/Downloads/hashes.txt").unwrap();
         dbg!(arc.file_system.stream_entries[0].hash40().label(&labels));
 
-        let data = arc.get_file_contents("stream:/sound/bgm/bgm_a10_malrpg2_zarazarasabaku.nus3audio").unwrap();
+        let data = arc.get_file_contents("stream:/sound/bgm/bgm_a10_malrpg2_zarazarasabaku.nus3audio", Region::UsEnglish).unwrap();
 
         //std::fs::write("bgm_a10_malrpg2_zarazarasabaku.nus3audio", data).unwrap();
     }
@@ -400,7 +402,7 @@ mod tests {
         dbg!(hash.label(&labels));
 
         let arc = ArcFile::open("/home/jam/re/ult/900/data.arc").unwrap();
-        let shared_files = arc.get_shared_files(hash).unwrap();
+        let shared_files = arc.get_shared_files(hash, Region::UsEnglish).unwrap();
 
         let shared_files: Vec<Option<&str>> = shared_files.into_iter()
             .map(|hash| hash.label(&labels))
@@ -452,9 +454,9 @@ mod tests {
     fn test_print_complete_data() {
         let arc = ArcFile::open("/home/jam/re/ult/900/data.arc").unwrap();
 
-        dbg!(arc.get_file_metadata("fighter/mewtwo/model/body/c00/model.numshb").unwrap());
-        dbg!(arc.get_file_metadata("stage/battlefield/normal/model/ring_nocastshadow_set/battlefield_baked_f.nutexb").unwrap());
-        dbg!(arc.get_file_metadata("fighter/jack/model/body/c00/model.numshb").unwrap());
-        dbg!(arc.get_file_metadata("fighter/jack/model/body/c00/model.numdlb").unwrap());
+        dbg!(arc.get_file_metadata("fighter/mewtwo/model/body/c00/model.numshb", Region::UsEnglish).unwrap());
+        dbg!(arc.get_file_metadata("stage/battlefield/normal/model/ring_nocastshadow_set/battlefield_baked_f.nutexb", Region::UsEnglish).unwrap());
+        dbg!(arc.get_file_metadata("fighter/jack/model/body/c00/model.numshb", Region::UsEnglish).unwrap());
+        dbg!(arc.get_file_metadata("fighter/jack/model/body/c00/model.numdlb", Region::UsEnglish).unwrap());
     }
 }

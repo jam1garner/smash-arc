@@ -1,4 +1,5 @@
 use crate::*;
+use region::Region;
 
 /// Open an ArcFile from a given null-terminated path
 ///
@@ -47,7 +48,7 @@ pub extern "C" fn arc_list_root_dir(arc: &ArcFile) -> DirListing {
 /// Get an owned slice of the file contents for a given file
 #[no_mangle]
 pub extern "C" fn arc_get_file_contents(arc: &ArcFile, hash: Hash40) -> FfiBytes {
-    arc.get_file_contents(hash).ok().into()
+    arc.get_file_contents(hash, Region::UsEnglish).ok().into()
 }
 
 #[no_mangle]
@@ -58,13 +59,13 @@ pub unsafe extern "C" fn arc_free_file_contents(ffi: FfiBytes) {
 /// Extract a file to a given null-terminated path for the given Hash40
 #[no_mangle]
 pub extern "C" fn arc_get_file_info(arc: &ArcFile, hash: Hash40) -> Option<&FileData> {
-    arc.get_file_data_from_hash(hash).ok()
+    arc.get_file_data_from_hash(hash, Region::UsEnglish).ok()
 }
 
 /// Get an owned list of shared files for a file, given its hash
 #[no_mangle]
 pub extern "C" fn arc_get_shared_files(arc: &ArcFile, hash: Hash40) -> FfiVec<Hash40> {
-    arc.get_shared_files(hash).ok().into()
+    arc.get_shared_files(hash, Region::UsEnglish).ok().into()
 }
 
 /// Free an owned list of shared files
@@ -76,7 +77,7 @@ pub unsafe extern "C" fn arc_free_shared_file_list(ffi: FfiVec<Hash40>) {
 /// Extract a file to a given null-terminated path for the given Hash40
 #[no_mangle]
 pub unsafe extern "C" fn arc_extract_file(arc: &ArcFile, hash: Hash40, path: *const i8) -> ExtractResult {
-    match arc.get_file_contents(hash) {
+    match arc.get_file_contents(hash, Region::UsEnglish) {
         Ok(contents) => {
             let path = std::ffi::CStr::from_ptr(path);
             let path = path.to_string_lossy().into_owned();
@@ -122,7 +123,7 @@ pub unsafe extern "C" fn arc_free_str(string: *mut i8) {
 
 #[no_mangle]
 pub fn arc_get_file_metadata(arc: &ArcFile, hash: Hash40) -> crate::lookups::FileMetadata {
-    arc.get_file_metadata(hash).unwrap()
+    arc.get_file_metadata(hash, Region::UsEnglish).unwrap()
 }
 
 #[no_mangle]

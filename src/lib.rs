@@ -1,6 +1,7 @@
 #![feature(test)]
 
 mod hash40;
+mod region;
 mod lookups;
 mod filesystem;
 mod hash_labels;
