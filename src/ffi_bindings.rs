@@ -51,6 +51,12 @@ pub extern "C" fn arc_get_file_contents(arc: &ArcFile, hash: Hash40) -> FfiBytes
     arc.get_file_contents(hash, Region::UsEnglish).ok().into()
 }
 
+/// Get an owned slice of the file contents for a given file, picking a specific region
+#[no_mangle]
+pub extern "C" fn arc_get_file_contents_regional(arc: &ArcFile, hash: Hash40, region: Region) -> FfiBytes {
+    arc.get_file_contents(hash, region).ok().into()
+}
+
 #[no_mangle]
 pub unsafe extern "C" fn arc_free_file_contents(ffi: FfiBytes) {
     Box::from_raw(std::slice::from_raw_parts_mut(ffi.ptr, ffi.size));
@@ -62,10 +68,22 @@ pub extern "C" fn arc_get_file_info(arc: &ArcFile, hash: Hash40) -> Option<&File
     arc.get_file_data_from_hash(hash, Region::UsEnglish).ok()
 }
 
+/// Extract a file to a given null-terminated path for the given Hash40 for a specified region
+#[no_mangle]
+pub extern "C" fn arc_get_file_info_regional(arc: &ArcFile, hash: Hash40, region: Region) -> Option<&FileData> {
+    arc.get_file_data_from_hash(hash, region).ok()
+}
+
 /// Get an owned list of shared files for a file, given its hash
 #[no_mangle]
 pub extern "C" fn arc_get_shared_files(arc: &ArcFile, hash: Hash40) -> FfiVec<Hash40> {
     arc.get_shared_files(hash, Region::UsEnglish).ok().into()
+}
+
+/// Get an owned list of shared files for a file, given its hash for a specified region
+#[no_mangle]
+pub extern "C" fn arc_get_shared_files_regional(arc: &ArcFile, hash: Hash40, region: Region) -> FfiVec<Hash40> {
+    arc.get_shared_files(hash, region).ok().into()
 }
 
 /// Free an owned list of shared files
@@ -78,6 +96,23 @@ pub unsafe extern "C" fn arc_free_shared_file_list(ffi: FfiVec<Hash40>) {
 #[no_mangle]
 pub unsafe extern "C" fn arc_extract_file(arc: &ArcFile, hash: Hash40, path: *const i8) -> ExtractResult {
     match arc.get_file_contents(hash, Region::UsEnglish) {
+        Ok(contents) => {
+            let path = std::ffi::CStr::from_ptr(path);
+            let path = path.to_string_lossy().into_owned();
+            match std::fs::write(path, contents) {
+                Ok(_) => ExtractResult::Ok,
+                Err(_) => ExtractResult::IoError,
+            }
+        }
+        Err(lookups::LookupError::Missing) => ExtractResult::Missing,
+        Err(_) => ExtractResult::IoError,
+    }
+}
+
+/// Extract a file to a given null-terminated path for the given Hash40 for a given region
+#[no_mangle]
+pub unsafe extern "C" fn arc_extract_file_regional(arc: &ArcFile, hash: Hash40, path: *const i8, region: Region) -> ExtractResult {
+    match arc.get_file_contents(hash, region) {
         Ok(contents) => {
             let path = std::ffi::CStr::from_ptr(path);
             let path = path.to_string_lossy().into_owned();
@@ -124,6 +159,11 @@ pub unsafe extern "C" fn arc_free_str(string: *mut i8) {
 #[no_mangle]
 pub fn arc_get_file_metadata(arc: &ArcFile, hash: Hash40) -> crate::lookups::FileMetadata {
     arc.get_file_metadata(hash, Region::UsEnglish).unwrap()
+}
+
+#[no_mangle]
+pub fn arc_get_file_metadata_regional(arc: &ArcFile, hash: Hash40, region: Region) -> crate::lookups::FileMetadata {
+    arc.get_file_metadata(hash, region).unwrap()
 }
 
 #[no_mangle]

@@ -1,3 +1,4 @@
+#[repr(u32)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Region {
     None = 0,
