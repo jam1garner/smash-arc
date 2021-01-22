@@ -17,6 +17,7 @@ use binread::{
 
 use crate::{Hash40, FileNode, FileSystem, CompressedFileSystem};
 use crate::hash_labels::HashLabels;
+use crate::filesystem::HashToIndex;
 
 pub trait SeekRead: std::io::Read + std::io::Seek {}
 impl<R: std::io::Read + std::io::Seek> SeekRead for R {}
@@ -65,6 +66,36 @@ fn parents_of_dir(dir: Hash40, labels: &mut HashLabels) -> Option<Vec<(Hash40, F
 fn dir_listing_flat<'a>(fs: &'a FileSystem, labels: &'a mut HashLabels) -> impl Iterator<Item = (Hash40, FileNode)> + 'a {
     let dirs: HashSet<_> = fs.file_paths.iter().map(|path| path.parent.hash40()).collect();
 
+    let mut stream_dirs = Vec::new();
+    for path_hash in fs.stream_hash_to_entries.iter().map(HashToIndex::hash40) {
+        if let Some(label) = path_hash.label(&labels).and_then(|label| label.rfind('/').map(|pos| label[..pos].to_owned())) {
+            let mut label = &label[..];
+            let mut last_hash = crate::hash40::hash40(label);
+
+            while let Some(len) = label.trim_end_matches('/').rfind('/') {
+                label = &label[..len];
+
+                let hash = labels.add_label(label);
+                stream_dirs.push((hash, FileNode::Dir(last_hash)));
+                last_hash = hash;
+            }
+
+            stream_dirs.push((crate::hash40::hash40("/"), FileNode::Dir(last_hash)));
+
+            labels.add_label(label);
+        }
+    }
+
+    let stream_paths: Vec<(Hash40, &str)> = fs.stream_hash_to_entries.iter().filter_map(|entry| entry.hash40().label(labels).map(|path| (entry.hash40(), path))).collect();
+    let stream_files: Vec<(Hash40, FileNode)> = stream_paths.iter().flat_map(|(path_hash, path)| {
+        path.rfind('/')
+            .map(|pos| {
+                let dir = crate::hash40::hash40(&path[..pos]);
+
+                (dir, FileNode::File(*path_hash))
+            })
+    }).collect();
+
     // Generate parents for directories
     let dirs = dirs.into_iter()
         .filter_map(move |dir| parents_of_dir(dir, labels).map(|x| x.into_iter()))
@@ -74,6 +105,8 @@ fn dir_listing_flat<'a>(fs: &'a FileSystem, labels: &'a mut HashLabels) -> impl 
     fs.file_paths.iter()
         .map(|path| (path.parent.hash40(), FileNode::File(path.path.hash40())))
         .chain(dirs)
+        .chain(stream_files.into_iter())
+        .chain(stream_dirs.into_iter())
 }
 
 #[cfg(feature = "dir-listing")]
@@ -151,6 +184,16 @@ mod tests {
         //let arc = ArcFile::open_over_network(("192.168.86.32", 43022)).unwrap();
 
         print_tree(&arc, "/");
+        //dbg!(arc.get_dir_listing("fighter/mario/model/body/c00/"));
+    }
+
+    #[test]
+    fn test_stream_listing() {
+        Hash40::set_global_labels_file("/home/jam/Downloads/hashes.txt");
+        let arc = ArcFile::open("/home/jam/re/ult/900/data.arc").unwrap();
+        //let arc = ArcFile::open_over_network(("192.168.86.32", 43022)).unwrap();
+
+        print_tree(&arc, "stream:");
         //dbg!(arc.get_dir_listing("fighter/mario/model/body/c00/"));
     }
 }
