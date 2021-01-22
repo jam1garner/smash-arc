@@ -116,7 +116,7 @@ pub trait ArcLookup {
 
             let file_data_index = self.get_file_in_folder(
                 self.get_file_info_from_hash(hash)?,
-                Region::UsEnglish
+                region
             ).file_data_index;
 
             Ok(
@@ -125,7 +125,7 @@ pub trait ArcLookup {
                     .filter_map(|hash_to_path| {
                         let hash = hash_to_path.hash40();
                         let file_info = self.get_file_info_from_hash(hash).ok()?;
-                        let file_in_folder = self.get_file_in_folder(file_info, Region::UsEnglish);
+                        let file_in_folder = self.get_file_in_folder(file_info, region);
                         if file_in_folder.file_data_index == file_data_index {
                             Some(hash)
                         } else {
