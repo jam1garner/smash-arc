@@ -43,6 +43,10 @@ pub trait ArcLookup {
     fn get_stream_section_offset(&self) -> u64;
     fn get_shared_section_offset(&self) -> u64;
     
+    // mutable access
+    fn get_file_infos_mut(&mut self) -> &mut [FileInfo];
+    fn get_file_datas_mut(&mut self) -> &mut [FileData];
+    
     fn get_file_contents<Hash: Into<Hash40>>(&self, hash: Hash) -> Result<Vec<u8>, LookupError> {
         let hash = hash.into();
 
@@ -195,6 +199,14 @@ pub trait ArcLookup {
         file_info
     }
 
+    fn get_file_info_from_path_index_mut(&mut self, path_index: u32) -> &mut FileInfo {
+        let index = self.get_file_paths()[path_index as usize].path.index() as usize;
+        let index = self.get_file_info_indices()[index].file_info_index as usize;
+        let file_info = &mut self.get_file_infos_mut()[index];
+
+        file_info
+    }
+
     fn get_file_in_folder(&self, file_info: &FileInfo) -> FileInfoToFileData {
         if file_info.flags.is_regional() {
             self.get_file_info_to_datas()[file_info.info_to_data_index as usize + 2]
@@ -211,6 +223,12 @@ pub trait ArcLookup {
         let file_in_folder = self.get_file_in_folder(file_info);
 
         &self.get_file_datas()[file_in_folder.file_data_index as usize]
+    }
+
+    fn get_file_data_mut(&mut self, file_info: &FileInfo) -> &mut FileData {
+        let file_in_folder = self.get_file_in_folder(file_info);
+
+        &mut self.get_file_datas_mut()[file_in_folder.file_data_index as usize]
     }
 
     fn get_folder_offset(&self, file_info: &FileInfo) -> u64 {

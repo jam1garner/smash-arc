@@ -30,12 +30,20 @@ impl ArcLookup for ArcFile {
         &self.file_system.file_infos
     }
 
+    fn get_file_infos_mut(&mut self) -> &mut [FileInfo] {
+        &mut self.file_system.file_infos
+    }
+
     fn get_file_info_to_datas(&self) -> &[FileInfoToFileData] {
         &self.file_system.file_info_to_datas
     }
 
     fn get_file_datas(&self) -> &[FileData] {
         &self.file_system.file_datas
+    }
+
+    fn get_file_datas_mut(&mut self) -> &mut [FileData] {
+        &mut self.file_system.file_datas
     }
 
     fn get_folder_offsets(&self) -> &[DirectoryOffset] {

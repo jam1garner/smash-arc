@@ -67,6 +67,14 @@ impl ArcLookup for LoadedArc {
         }
     }
 
+    fn get_file_infos_mut(&mut self) -> &mut [FileInfo] {
+        unsafe {
+            let fs = *self.fs_header;
+            let table_size = fs.file_info_count + fs.sub_file_count_2 + fs.extra_count ;
+            slice::from_raw_parts_mut(self.file_infos, table_size as _)
+        }
+    }
+
     fn get_file_info_to_datas(&self) -> &[FileInfoToFileData] {
         unsafe {
             let fs = *self.fs_header;
@@ -80,6 +88,14 @@ impl ArcLookup for LoadedArc {
             let fs = *self.fs_header;
             let table_size = fs.sub_file_count + fs.sub_file_count_2 + fs.extra_count;
             slice::from_raw_parts(self.file_datas, table_size as _)
+        }
+    }
+    
+    fn get_file_datas_mut(&mut self) -> &mut [FileData] {
+        unsafe {
+            let fs = *self.fs_header;
+            let table_size = fs.sub_file_count + fs.sub_file_count_2 + fs.extra_count;
+            slice::from_raw_parts_mut(self.file_datas, table_size as _)
         }
     }
 
