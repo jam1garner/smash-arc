@@ -211,7 +211,7 @@ pub trait ArcLookup {
 
     fn get_file_in_folder(&self, file_info: &FileInfo, region: Region) -> FileInfoToFileData {
         if file_info.flags.is_regional() {
-            self.get_file_info_to_datas()[file_info.info_to_data_index as usize + 2]
+            self.get_file_info_to_datas()[file_info.info_to_data_index as usize + (region as usize)]
         } else {
             self.get_file_info_to_datas()[file_info.info_to_data_index as usize]
         }
