@@ -25,7 +25,7 @@ pub use hash_labels::{GLOBAL_LABELS, HashLabels};
 #[derive(Debug, PartialEq, Ord, PartialOrd, Eq)]
 pub enum FileNode {
     Dir(Hash40),
-    File(Hash40)
+    File(Hash40),
 }
 
 #[cfg(test)]

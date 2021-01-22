@@ -71,6 +71,7 @@ fn dir_listing_flat<'a>(fs: &'a FileSystem, labels: &'a mut HashLabels) -> impl 
         if let Some(label) = path_hash.label(&labels).and_then(|label| label.rfind('/').map(|pos| label[..pos].to_owned())) {
             let mut label = &label[..];
             let mut last_hash = crate::hash40::hash40(label);
+            labels.add_label(label);
 
             while let Some(len) = label.trim_end_matches('/').rfind('/') {
                 label = &label[..len];
