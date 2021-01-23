@@ -13,7 +13,7 @@ pub use rust_zstd::*;
 #[cfg(all(feature = "libzstd", feature = "rust-zstd"))]
 compile_error!("Only one ZSTD backend can be enabled at a time");
 
-#[cfg(not(any(feature = "libzstd", feature = "rust-zstd", feature = "nozstd")))]
+#[cfg(not(any(feature = "libzstd", feature = "rust-zstd", feature = "nozstd", doc)))]
 compile_error!("At least one ZSTD backend feature must be enabled");
 
 #[cfg(not(any(feature = "libzstd", feature = "rust-zstd")))]
