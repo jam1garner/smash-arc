@@ -28,6 +28,8 @@ pub enum FileNode {
     File(Hash40),
 }
 
+pub use region::Region;
+
 #[cfg(test)]
 mod tests {
     use super::*;
