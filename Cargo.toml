@@ -3,6 +3,10 @@ name = "smash-arc"
 version = "0.2.0"
 authors = ["jam1garner <8260240+jam1garner@users.noreply.github.com>"]
 edition = "2018"
+description = "A Rust library for working with Smash Ultimate's data.arc files"
+repository = "https://github.com/jam1garner/smash-arc"
+documentation = "https://docs.rs/smash-arc"
+license = "MIT"
 
 [lib]
 crate-type = ["lib", "cdylib"]
@@ -19,11 +23,11 @@ ruzstd = { version = "=0.2.2", optional = true }
 parking_lot = { version = "0.11", optional = true }
 lazy_static = { version = "1.4", optional = true }
 
-network-reader = { git = "https://github.com/jam1garner/network-reader.git", optional = true }
+network-reader-adapter = { version = "0.1", optional = true }
 
 [features]
 default = ["dir-listing", "network"]
-network = ["network-reader"]
+network = ["network-reader-adapter"]
 dir-listing = ["global-hashes"]
 global-hashes = ["lazy_static", "parking_lot"]
 smash-runtime = ["crc32fast/nightly"]
