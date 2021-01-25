@@ -22,6 +22,7 @@ use crate::filesystem::HashToIndex;
 pub trait SeekRead: std::io::Read + std::io::Seek {}
 impl<R: std::io::Read + std::io::Seek> SeekRead for R {}
 
+/// A struct representing the data.arc file
 #[derive(BinRead)]
 #[br(magic = 0xABCDEF9876543210_u64)]
 pub struct ArcFile {

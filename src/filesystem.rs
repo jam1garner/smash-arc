@@ -39,6 +39,8 @@ impl BinRead for CompressedFileSystem {
     }
 }
 
+/// The filesystem itself. Includes all the linking between paths, file data, directories, and
+/// mass-loading groups.
 #[derive_binread]
 #[derive(Debug)]
 pub struct FileSystem {

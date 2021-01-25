@@ -21,6 +21,11 @@ mod arc_file;
 #[cfg(feature = "smash-runtime")]
 mod loaded_arc;
 
+/// The trait that allows different implementations of the arc to share the same code for making
+/// lookups into the filesystem use the same logic.
+///
+/// To implement, provide accessors for the needed data and all the lookups themselves will be
+/// implemented for you.
 pub trait ArcLookup {
     fn get_file_info_buckets(&self) -> &[FileInfoBucket];
     fn get_file_hash_to_path_index(&self) -> &[HashToIndex];

@@ -20,6 +20,12 @@ impl Hash40 {
     }
 }
 
+impl From<&Hash40> for Hash40 {
+    fn from(hash: &Hash40) -> Self {
+        *hash
+    }
+}
+
 impl From<u64> for Hash40 {
     fn from(hash: u64) -> Self {
         Hash40(hash)
