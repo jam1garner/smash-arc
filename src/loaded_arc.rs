@@ -1,6 +1,6 @@
 use std::{
     fs::File,
-    io::BufReader,
+    io::BufReader
 };
 
 use binread::{
@@ -32,11 +32,11 @@ pub struct LoadedArc {
     pub file_paths: *const FilePath,
     pub file_info_indices: *const FileInfoIndex,
     pub dir_hash_to_info_index: *const HashToIndex,
-    pub dir_infos: *const DirInfo,
+    pub dir_infos: *const LoadedDirInfo,
     pub folder_offsets: *const DirectoryOffset,
     pub folder_child_hashes: *const HashToIndex,
     pub file_infos: *mut FileInfo,
-    pub file_info_to_datas: *const FileInfoToFileData,
+    pub file_info_to_datas: *mut FileInfoToFileData,
     pub file_datas: *mut FileData,
     pub unk_section: u64,
     pub stream_header: *const StreamHeader,
@@ -68,6 +68,20 @@ impl LoadedArc {
 
         Ok(arc)
     }
+}
+
+#[repr(C)]
+pub struct LoadedDirInfo {
+    pub path_hash: u32,
+    pub dir_offset_index: u32,
+    pub name: HashToIndex,
+    pub parent: HashToIndex,
+    pub extra_dis_re: HashToIndex,
+    pub file_info_start_index: u32,
+    pub file_info_count: u32,
+    pub child_dir_start_index: u32,
+    pub child_dir_count: u32,
+    pub flags: u32,
 }
 
 #[repr(C)]
