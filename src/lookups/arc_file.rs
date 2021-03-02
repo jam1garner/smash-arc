@@ -40,6 +40,10 @@ impl ArcLookup for ArcFile {
         &self.file_system.file_info_to_datas
     }
 
+    fn get_file_info_to_datas_mut(&mut self) -> &mut [FileInfoToFileData] {
+        &mut self.file_system.file_info_to_datas
+    }
+
     fn get_file_datas(&self) -> &[FileData] {
         &self.file_system.file_datas
     }

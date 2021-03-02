@@ -1,5 +1,5 @@
 use modular_bitfield::prelude::*;
-use crate::Hash40;
+use crate::{FileDataIdx, FileInfoIdx, FileInfoIndiceIdx, FilePathIdx, InfoToDataIdx, Hash40};
 
 use binread::{
     BinRead,
@@ -94,13 +94,13 @@ pub struct FileSystem {
     #[br(count = fs_header.hash_folder_count)]
     pub folder_child_hashes: Vec<HashToIndex>,
 
-    #[br(count = fs_header.file_info_count + fs_header.sub_file_count_2 + fs_header.extra_count)]
+    #[br(count = fs_header.file_info_count + fs_header.file_data_count_2 + fs_header.extra_count)]
     pub file_infos: Vec<FileInfo>,
 
-    #[br(count = fs_header.file_info_sub_index_count + fs_header.sub_file_count_2 + fs_header.extra_count_2)]
+    #[br(count = fs_header.file_info_sub_index_count + fs_header.file_data_count_2 + fs_header.extra_count_2)]
     pub file_info_to_datas: Vec<FileInfoToFileData>,
 
-    #[br(count = fs_header.sub_file_count + fs_header.sub_file_count_2 + fs_header.extra_count)]
+    #[br(count = fs_header.file_data_count + fs_header.file_data_count_2 + fs_header.extra_count)]
     pub file_datas: Vec<FileData>,
 }
 
@@ -116,10 +116,10 @@ pub struct FileSystemHeader {
     pub hash_folder_count: u32,
     pub file_info_count: u32,
     pub file_info_sub_index_count: u32,
-    pub sub_file_count: u32,
+    pub file_data_count: u32,
 
     pub folder_offset_count_2: u32,
-    pub sub_file_count_2: u32,
+    pub file_data_count_2: u32,
     pub padding: u32,
 
     pub unk1_10: u32, // always 0x10
@@ -193,7 +193,7 @@ pub struct FilePath {
 #[derive(BinRead, Debug, Clone, Copy)]
 pub struct FileInfoIndex {
     pub dir_offset_index: u32,
-    pub file_info_index: u32,
+    pub file_info_index: FileInfoIdx,
 }
 
 #[derive(BinRead, Debug, Clone)]
@@ -204,7 +204,7 @@ pub struct DirInfo {
     pub parent: Hash40,
     pub extra_dis_re: u32,
     pub extra_dis_re_length: u32,
-    pub file_name_start_index: u32,
+    pub file_info_start_index: u32,
     pub file_info_count: u32,
     pub child_dir_start_index: u32,
     pub child_dir_count: u32,
@@ -222,19 +222,17 @@ pub struct DirectoryOffset {
     pub offset: u64,
     pub decomp_size: u32,
     pub size: u32,
-    pub sub_data_start_index: u32,
-    pub sub_data_count: u32,
+    pub file_data_start_index: u32,
+    pub file_data_count: u32,
     pub resource_index: u32,
 }
 
 #[derive(BinRead, Debug, Clone, Copy)]
 pub struct FileInfo {
-    // PathIndex
-    pub hash_index: u32,
-    // IndexIndex
-    pub hash_index_2: u32,
+    pub file_path_index: FilePathIdx,
+    pub file_info_indice_index: FileInfoIndiceIdx,
     // SubIndexIndex
-    pub info_to_data_index: u32,
+    pub info_to_data_index: InfoToDataIdx,
     // Flags
     pub flags: FileInfoFlags,
 }
@@ -259,7 +257,7 @@ pub struct FileInfoFlags {
 #[derive(BinRead, Debug, Clone, Copy)]
 pub struct FileInfoToFileData {
     pub folder_offset_index: u32,
-    pub file_data_index: u32,
+    pub file_data_index: FileDataIdx,
     pub file_info_index_and_flag: u32,
 }
 
