@@ -170,7 +170,7 @@ pub trait ArcLookup {
 
     fn get_file_info_from_hash(&self, hash: Hash40) -> Result<&FileInfo, LookupError> {
         let path_index = self.get_file_path_index_from_hash(hash)?;
-        let file_info = self.get_file_info_from_path_index(path_index.into());
+        let file_info = self.get_file_info_from_path_index(path_index);
         
         Ok(file_info)
     }

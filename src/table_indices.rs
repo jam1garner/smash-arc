@@ -1,4 +1,4 @@
-use std::convert::TryFrom;
+use std::convert::{TryInto, TryFrom};
 
 use binread::BinRead;
 
@@ -8,7 +8,7 @@ pub struct FilePathIdx(u32);
 
 impl From<FilePathIdx> for usize {
     fn from(index: FilePathIdx) -> Self {
-        index.into()
+        index.0 as usize
     }
 }
 
@@ -20,7 +20,7 @@ impl From<u32> for FilePathIdx {
 
 impl From<usize> for FilePathIdx {
     fn from(index: usize) -> Self {
-        FilePathIdx(u32::try_from(index).unwrap())
+        FilePathIdx(index as u32)
     }
 }
 
@@ -30,7 +30,7 @@ pub struct FileInfoIdx(u32);
 
 impl From<FileInfoIdx> for usize {
     fn from(index: FileInfoIdx) -> Self {
-        index.into()
+        index.0 as usize
     }
 }
 
@@ -42,7 +42,7 @@ impl From<u32> for FileInfoIdx {
 
 impl From<usize> for FileInfoIdx {
     fn from(index: usize) -> Self {
-        FileInfoIdx(u32::try_from(index).unwrap())
+        FileInfoIdx(index as u32)
     }
 }
 
@@ -52,7 +52,7 @@ pub struct FileInfoIndiceIdx(pub u32);
 
 impl From<FileInfoIndiceIdx> for usize {
     fn from(index: FileInfoIndiceIdx) -> Self {
-        index.into()
+        index.0 as usize
     }
 }
 
@@ -74,7 +74,7 @@ pub struct InfoToDataIdx(u32);
 
 impl From<InfoToDataIdx> for usize {
     fn from(index: InfoToDataIdx) -> Self {
-        index.into()
+        index.0 as usize
     }
 }
 
@@ -96,7 +96,7 @@ pub struct FileDataIdx(pub u32);
 
 impl From<FileDataIdx> for usize {
     fn from(index: FileDataIdx) -> Self {
-        index.into()
+        index.0 as usize
     }
 }
 
