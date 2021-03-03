@@ -64,7 +64,7 @@ impl From<u32> for FileInfoIndiceIdx {
 
 impl From<usize> for FileInfoIndiceIdx {
     fn from(index: usize) -> Self {
-        FileInfoIndiceIdx(u32::try_from(index).unwrap())
+        FileInfoIndiceIdx(index as u32)
     }
 }
 
@@ -86,7 +86,7 @@ impl From<u32> for InfoToDataIdx {
 
 impl From<usize> for InfoToDataIdx {
     fn from(index: usize) -> Self {
-        InfoToDataIdx(u32::try_from(index).unwrap())
+        InfoToDataIdx(index as u32)
     }
 }
 
@@ -108,6 +108,6 @@ impl From<u32> for FileDataIdx {
 
 impl From<usize> for FileDataIdx {
     fn from(index: usize) -> Self {
-        FileDataIdx(u32::try_from(index).unwrap())
+        FileDataIdx(index as u32)
     }
 }
