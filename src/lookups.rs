@@ -154,9 +154,8 @@ pub trait ArcLookup {
         let file_info_buckets = self.get_file_info_buckets();
         let bucket_index = (hash.as_u64() % (file_info_buckets.len() as u64)) as usize;
         let bucket = &file_info_buckets[bucket_index];
-        let bucket = &self.get_file_hash_to_path_index()[bucket.range()];
-
-        bucket
+        
+        &self.get_file_hash_to_path_index()[bucket.range()]
     }
 
     fn get_file_path_index_from_hash(&self, hash: Hash40) -> Result<FilePathIdx, LookupError> {
@@ -165,7 +164,7 @@ pub trait ArcLookup {
         let index_in_bucket = bucket.binary_search_by_key(&hash, |group| group.hash40())
             .map_err(|_| LookupError::Missing)?;
 
-        Ok(bucket[index_in_bucket].index().into())
+        Ok(FilePathIdx(bucket[index_in_bucket].index()))
     }
 
     fn get_file_info_from_hash(&self, hash: Hash40) -> Result<&FileInfo, LookupError> {
@@ -193,17 +192,15 @@ pub trait ArcLookup {
     fn get_file_info_from_path_index(&self, path_index: FilePathIdx) -> &FileInfo {
         let index = self.get_file_paths()[usize::from(path_index)].path.index() as usize;
         let index = usize::from(self.get_file_info_indices()[index].file_info_index);
-        let file_info = &self.get_file_infos()[index];
 
-        file_info
+        &self.get_file_infos()[index]
     }
 
     fn get_file_info_from_path_index_mut(&mut self, path_index: FilePathIdx) -> &mut FileInfo {
         let index = self.get_file_paths()[usize::from(path_index)].path.index() as usize;
         let index = usize::from(self.get_file_info_indices()[index].file_info_index);
-        let file_info = &mut self.get_file_infos_mut()[index];
 
-        file_info
+        &mut self.get_file_infos_mut()[index]
     }
 
     fn get_file_in_folder(&self, file_info: &FileInfo, region: Region) -> FileInfoToFileData {
@@ -241,9 +238,7 @@ pub trait ArcLookup {
     fn get_folder_offset(&self, file_info: &FileInfo, region: Region) -> u64 {
         let file_in_folder = self.get_file_in_folder(file_info, region);
 
-        let folder_offset = self.get_folder_offsets()[file_in_folder.folder_offset_index as usize].offset;
-
-        folder_offset
+        self.get_folder_offsets()[file_in_folder.folder_offset_index as usize].offset
     }
 
     fn read_file_data(&self, file_data: &FileData, folder_offset: u64) -> Result<Vec<u8>, LookupError> {
@@ -364,7 +359,7 @@ impl QuickDir {
 }
 
 impl FileInfoBucket {
-    fn range(&self) -> Range<usize> {
+    fn range(self) -> Range<usize> {
         let start = self.start as usize;
         let end = start + self.count as usize;
 
@@ -418,7 +413,7 @@ mod tests {
 
     #[test]
     fn test_get_dir() {
-        let arc = ArcFile::open("/home/jam/re/ult/900/data.arc").unwrap();
+        let arc = ArcFile::open("H:/Documents/Smash/update/romfs/data_1010.arc").unwrap();
         let dir_info = arc.get_dir_info_from_hash("fighter/mario").unwrap();
 
         let start = dir_info.child_dir_start_index as usize;
@@ -427,7 +422,7 @@ mod tests {
         let children = &arc.file_system.folder_child_hashes[start..end].iter()
             .map(|child| &arc.file_system.dir_infos[child.index() as usize])
             .collect::<Vec<_>>();
-        let labels = crate::hash_labels::HashLabels::from_file("/home/jam/Downloads/hashes.txt").unwrap();
+        let labels = crate::hash_labels::HashLabels::from_file("H:/Downloads/hashes.txt").unwrap();
 
         for child in children {
             eprint!("{} ", child.name.label(&labels).map(String::from).unwrap_or_else(|| format!("0x{:X}", child.name.as_u64())));
@@ -455,13 +450,132 @@ mod tests {
         assert!(extensions.contains("nus3bank"));
     }
 
-    #[test]
-    fn test_print_complete_data() {
-        let arc = ArcFile::open("/home/jam/re/ult/900/data.arc").unwrap();
+    //#[test]
+    // fn test_print_complete_data() {
+    //     let arc = ArcFile::open("H:/Documents/Smash/update/romfs/data_1010.arc").unwrap();
 
-        dbg!(arc.get_file_metadata("fighter/mewtwo/model/body/c00/model.numshb", Region::UsEnglish).unwrap());
-        dbg!(arc.get_file_metadata("stage/battlefield/normal/model/ring_nocastshadow_set/battlefield_baked_f.nutexb", Region::UsEnglish).unwrap());
-        dbg!(arc.get_file_metadata("fighter/jack/model/body/c00/model.numshb", Region::UsEnglish).unwrap());
-        dbg!(arc.get_file_metadata("fighter/jack/model/body/c00/model.numdlb", Region::UsEnglish).unwrap());
+    //     let labels = crate::hash_labels::HashLabels::from_file("H:/Downloads/hashes.txt").unwrap();
+    //     //dbg!(arc.get_file_metadata("fighter/mewtwo/model/body/c00/model.numshb", Region::UsEnglish).unwrap());
+    //     let file_path_index = dbg!(arc.get_file_path_index_from_hash("fighter/marth/model/body/c00/model.numshb".into()).unwrap());
+    //     dbg!(arc.get_file_info_from_hash("stage/battlefield_s/normal/model/floating_plate_set/battlefield_linegaina_col.nutexb".into()).unwrap());
+    //     let path_idx = arc.get_file_info_from_hash("stage/battlefield_s/normal/model/floating_plate_set/battlefield_linegaina_col.nutexb".into()).unwrap();
+    //     dbg!(arc.get_file_paths()[path_idx.hash_index as usize].path.hash40().label(&labels).unwrap());
+    // }
+
+    // #[test]
+    // fn test_battlefield() {
+    //     let arc = ArcFile::open("H:/Documents/Smash/update/romfs/data_1010.arc").unwrap();
+
+    //     let labels = crate::hash_labels::HashLabels::from_file("H:/Downloads/hashes.txt").unwrap();
+    //     // let file_path_index = dbg!(arc.get_file_path_index_from_hash("stage/battlefield_l/normal/model/floating_plate_set/battlefield_linegaina_col.nutexb".into()).unwrap());
+    //     let file_path_index = dbg!(arc.get_file_path_index_from_hash("stage/common/shared/model/kumite_itembase2_set/battlefield_linegaina_col.nutexb".into()).unwrap());
+    //     let file_path = dbg!(arc.get_file_paths()[file_path_index as usize]);
+    //     let file_info_index = dbg!(arc.get_file_info_indices()[file_path.path.index() as usize]);
+    //     let file_info = dbg!(arc.get_file_infos()[file_info_index.file_info_index as usize]);
+    // }
+
+    // #[test]
+    // fn test_stage_common() {
+    //     let arc = ArcFile::open("H:/Documents/Smash/update/romfs/data_1010.arc").unwrap();
+
+    //     let labels = crate::hash_labels::HashLabels::from_file("H:/Downloads/hashes.txt").unwrap();
+    //     // let dir_info = dbg!(arc.get_dir_info_from_hash(Hash40::from("stage/common/shared/model/kumite_itembase2_set")).unwrap());
+    //     let dir_info = dbg!(arc.get_dir_info_from_hash(Hash40::from("stage/common/shared/model/kumite_itembase2_set")).unwrap());
+
+    //     let start = dir_info.file_name_start_index as usize;
+    //     let end = (dir_info.file_name_start_index as usize) + (dir_info.file_info_count as usize);
+
+    //     let file_infos = &arc.get_file_infos()[start..end].iter().collect::<Vec<_>>();
+
+    //     let file_path_index = dbg!(arc.get_file_path_index_from_hash("stage/common/shared/model/kumite_itembase2_set/battlefield_linegaina_col.nutexb".into()).unwrap());
+
+    //     for (index, info) in file_infos.iter().enumerate() {
+    //         if info.hash_index == file_path_index {
+    //             dbg!(start + index);
+    //             dbg!(info);
+    //             let file_path = arc.get_file_paths()[info.hash_index as usize];
+    //             let info_to_data = dbg!(arc.get_file_info_to_datas()[info.info_to_data_index as usize]);
+
+    //             let info_to_datas = arc.get_file_info_to_datas();
+
+    //             let idk : Vec<&FileInfoToFileData> = info_to_datas
+    //             .iter()
+    //             .filter_map(|hash_to_path| {
+    //                 if hash_to_path.file_info_index_and_flag == info_to_data.file_info_index_and_flag {
+    //                     Some(hash_to_path)
+    //                 } else {
+    //                     None
+    //                 }
+    //             }).collect();
+
+    //             dbg!(idk);
+    //         }
+    //     }
+    // }
+
+    #[test]
+    fn crash() {
+        let arc = ArcFile::open("H:/Documents/Smash/update/romfs/data_1010.arc").unwrap();
+
+        let labels = crate::hash_labels::HashLabels::from_file("H:/Downloads/hashes.txt").unwrap();
+        let file_path_index = arc.get_file_path_index_from_hash(Hash40::from(154550836855)).unwrap();
+        //let file_path_index = arc.get_file_path_index_from_hash("fighter/marth/model/body/c00/model.numshb".into()).unwrap();
+        dbg!(file_path_index);
     }
+
+    // #[test]
+    // fn test_marth_c00() {
+    //     let arc = ArcFile::open("H:/Documents/Smash/update/romfs/data_1010.arc").unwrap();
+
+    //     let labels = crate::hash_labels::HashLabels::from_file("H:/Downloads/hashes.txt").unwrap();
+    //     let file_path_index = dbg!(arc.get_file_path_index_from_hash("fighter/marth/model/body/c00/model.numshb".into()).unwrap());
+    //     let file_path = dbg!(arc.get_file_paths()[file_path_index as usize]);
+    //     let file_info_index = dbg!(arc.get_file_info_indices()[file_path.path.index() as usize]);
+    //     let dir_offset = &arc.get_folder_offsets()[file_info_index.dir_offset_index as usize];
+    //     let start = dir_offset.sub_data_start_index as usize;
+    //     let end = dir_offset.sub_data_start_index as usize + dir_offset.sub_data_count as usize;
+    //     let subfiles = arc.get_file_datas()[start..end].iter().collect::<Vec<_>>();
+
+    //     for subfile in subfiles {
+    //         dbg!(subfile);
+    //     }
+        
+    //     let file_info = dbg!(arc.get_file_infos()[file_info_index.file_info_index as usize]);
+    //     dbg!(file_path.parent.hash40().label(&labels).unwrap());
+    // }
+
+    // #[test]
+    // fn test_marth_c01() {
+    //     let arc = ArcFile::open("H:/Documents/Smash/update/romfs/data_1010.arc").unwrap();
+
+    //     let labels = crate::hash_labels::HashLabels::from_file("H:/Downloads/hashes.txt").unwrap();
+    //     let file_path_index = dbg!(arc.get_file_path_index_from_hash("fighter/marth/model/body/c01/model.numshb".into()).unwrap());
+    //     let file_path = dbg!(arc.get_file_paths()[file_path_index as usize]);
+    //     let file_info_index = dbg!(arc.get_file_info_indices()[file_path.path.index() as usize]);
+    //     let file_info = dbg!(arc.get_file_infos()[file_info_index.file_info_index as usize]);
+    // }
+
+    // #[test]
+    // fn test_marth_dir_c00() {
+    //     let arc = ArcFile::open("H:/Documents/Smash/update/romfs/data_1010.arc").unwrap();
+
+    //     let labels = crate::hash_labels::HashLabels::from_file("H:/Downloads/hashes.txt").unwrap();
+    //     let dir_info = dbg!(arc.get_dir_info_from_hash(Hash40::from("fighter/marth/c01")).unwrap());
+
+    //     let start = dir_info.file_name_start_index as usize;
+    //     let end = (dir_info.file_name_start_index as usize) + (dir_info.file_info_count as usize);
+
+    //     let file_infos = &arc.get_file_infos()[start..end].iter().collect::<Vec<_>>();
+
+    //     let file_path_index = dbg!(arc.get_file_path_index_from_hash("fighter/marth/model/body/c01/model.numshb".into()).unwrap());
+
+    //     for (index, info) in file_infos.iter().enumerate() {
+    //         if info.hash_index == file_path_index {
+    //             dbg!(start + index);
+    //             dbg!(info.hash_index_2);
+    //             let file_path = arc.get_file_paths()[info.hash_index as usize];
+    //             dbg!(file_path.path.hash40().label(&labels).unwrap());
+    //         }
+    //     }
+    // }
 }

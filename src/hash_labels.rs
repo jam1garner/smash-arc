@@ -43,12 +43,12 @@ impl HashLabels {
 }
 
 impl Hash40 {
-    pub fn label<'a>(&self, labels: &'a HashLabels) -> Option<&'a str> {
-        labels.labels.get(self).map(|x| &**x)
+    pub fn label<'a>(self, labels: &'a HashLabels) -> Option<&'a str> {
+        labels.labels.get(&self).map(|x| &**x)
     }
 
-    pub fn global_label(&self) -> Option<String> {
-        GLOBAL_LABELS.read().labels.get(self).map(Clone::clone)
+    pub fn global_label(self) -> Option<String> {
+        GLOBAL_LABELS.read().labels.get(&self).map(Clone::clone)
     }
 
     //pub fn global_label<'a>(self) -> MappedRwLockReadGuard<'a, Option<&'a str>> {
@@ -59,7 +59,8 @@ impl Hash40 {
     //}
 
     pub fn set_global_labels_file<P: AsRef<Path>>(label_file: P) -> Result<(), std::io::Error> {
-        Ok(Self::set_global_labels(HashLabels::from_file(label_file)?))
+        Self::set_global_labels(HashLabels::from_file(label_file)?);
+        Ok(())
     }
 
     pub fn set_global_labels(labels: HashLabels) {

@@ -133,10 +133,7 @@ pub unsafe extern "C" fn arc_load_labels(path: *const i8) -> bool {
     let path = std::ffi::CStr::from_ptr(path);
     let path = path.to_string_lossy().into_owned();
 
-    match Hash40::set_global_labels_file(path) {
-        Ok(_) => true,
-        Err(_) => false
-    }
+    Hash40::set_global_labels_file(path).is_ok()
 }
 
 /// Get a label for a given Hash40

@@ -1,10 +1,8 @@
-use std::convert::{TryInto, TryFrom};
-
 use binread::BinRead;
 
 #[repr(transparent)]
 #[derive(BinRead, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct FilePathIdx(u32);
+pub struct FilePathIdx(pub u32);
 
 impl From<FilePathIdx> for usize {
     fn from(index: FilePathIdx) -> Self {
@@ -26,7 +24,7 @@ impl From<usize> for FilePathIdx {
 
 #[repr(transparent)]
 #[derive(BinRead, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct FileInfoIdx(u32);
+pub struct FileInfoIdx(pub u32);
 
 impl From<FileInfoIdx> for usize {
     fn from(index: FileInfoIdx) -> Self {
@@ -37,6 +35,12 @@ impl From<FileInfoIdx> for usize {
 impl From<u32> for FileInfoIdx {
     fn from(index: u32) -> Self {
         FileInfoIdx(index)
+    }
+}
+
+impl From<FileInfoIdx> for u32 {
+    fn from(index: FileInfoIdx) -> Self {
+        index.0
     }
 }
 
@@ -62,6 +66,12 @@ impl From<u32> for FileInfoIndiceIdx {
     }
 }
 
+impl From<FileInfoIndiceIdx> for u32 {
+    fn from(index: FileInfoIndiceIdx) -> Self {
+        index.0
+    }
+}
+
 impl From<usize> for FileInfoIndiceIdx {
     fn from(index: usize) -> Self {
         FileInfoIndiceIdx(index as u32)
@@ -70,7 +80,7 @@ impl From<usize> for FileInfoIndiceIdx {
 
 #[repr(transparent)]
 #[derive(BinRead, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct InfoToDataIdx(u32);
+pub struct InfoToDataIdx(pub u32);
 
 impl From<InfoToDataIdx> for usize {
     fn from(index: InfoToDataIdx) -> Self {

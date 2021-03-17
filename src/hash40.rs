@@ -7,15 +7,15 @@ use crate::{HashToIndex, DirInfo, StreamEntry, QuickDir};
 pub struct Hash40(pub u64);
 
 impl Hash40 {
-    pub fn as_u64(&self) -> u64 {
+    pub fn as_u64(self) -> u64 {
         self.0
     }
 
-    pub fn len(&self) -> u8 {
+    pub fn len(self) -> u8 {
         (self.0 >> 32) as u8
     }
 
-    pub fn crc32(&self) -> u32 {
+    pub fn crc32(self) -> u32 {
         self.0 as u32
     }
 }
@@ -76,7 +76,7 @@ impl StreamEntry {
 
 impl DirInfo {
     pub fn path_hash40(&self) -> Hash40 {
-        Hash40((self.path_hash as u64) + ((self.dir_offset_index as u64) & 0xFF) << 32)
+        Hash40(((self.path_hash as u64) + ((self.dir_offset_index as u64) & 0xFF)) << 32)
     }
 }
 
