@@ -1,4 +1,4 @@
-use binread::BinRead;
+use binrw::BinRead;
 use crc32fast::Hasher;
 use crate::{HashToIndex, DirInfo, StreamEntry, QuickDir};
 

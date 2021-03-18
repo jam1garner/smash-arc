@@ -7,7 +7,7 @@ use std::{
     collections::{HashMap, HashSet},
 };
 
-use binread::{
+use binrw::{
     BinRead,
     FilePtr64,
     BinResult,

@@ -1,4 +1,4 @@
-use binread::BinRead;
+use binrw::BinRead;
 
 #[repr(transparent)]
 #[derive(BinRead, Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]

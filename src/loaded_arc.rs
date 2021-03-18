@@ -3,7 +3,7 @@ use std::{
     io::BufReader
 };
 
-use binread::{
+use binrw::{
     BinResult,
     BinReaderExt
 };

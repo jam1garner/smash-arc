@@ -1,7 +1,7 @@
 use modular_bitfield::prelude::*;
 use crate::{FileDataIdx, FileInfoIdx, FileInfoIndiceIdx, FilePathIdx, InfoToDataIdx, Hash40};
 
-use binread::{
+use binrw::{
     BinRead,
     derive_binread,
     ReadOptions,
