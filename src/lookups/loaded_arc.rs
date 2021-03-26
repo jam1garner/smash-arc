@@ -110,7 +110,7 @@ impl ArcLookup for LoadedArc {
     fn get_folder_offsets(&self) -> &[DirectoryOffset] {
         unsafe {
             let fs = *self.fs_header;
-            let table_size = fs.folder_offset_count_1 + fs.folder_offset_count_2 + fs.extra_folder;
+            let table_size = fs.folder_offset_count_1 + fs.folder_offset_count_2; // + fs.extra_folder;
             slice::from_raw_parts(self.folder_offsets, table_size as _)
         }
     }
