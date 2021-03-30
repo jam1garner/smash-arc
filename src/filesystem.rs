@@ -168,12 +168,18 @@ pub struct StreamEntry {
 }
 
 #[bitfield]
-#[derive(BinRead, Debug, Clone, Copy)]
+#[derive(BinRead, Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
 #[br(map = Self::from_bytes)]
 pub struct HashToIndex {
     pub hash: u32,
     pub length: u8,
     pub index: B24,
+}
+
+impl PartialEq<Hash40> for HashToIndex {
+    fn eq(&self, other: &Hash40) -> bool {
+        self.hash40() == *other
+    }
 }
 
 #[derive(BinRead, Debug, Clone, Copy)]
