@@ -71,6 +71,7 @@ impl LoadedArc {
 }
 
 #[repr(C)]
+#[derive(Debug)]
 pub struct LoadedDirInfo {
     pub path_hash: u32,
     pub dir_offset_index: u32,

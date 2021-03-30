@@ -168,7 +168,7 @@ pub struct StreamEntry {
 }
 
 #[bitfield]
-#[derive(BinRead, Debug, Clone, Copy)]
+#[derive(BinRead, Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
 #[br(map = Self::from_bytes)]
 pub struct HashToIndex {
     pub hash: u32,
@@ -176,12 +176,19 @@ pub struct HashToIndex {
     pub index: B24,
 }
 
+impl PartialEq<Hash40> for HashToIndex {
+    fn eq(&self, other: &Hash40) -> bool {
+        self.hash40() == *other
+    }
+}
+
 #[derive(BinRead, Debug, Clone, Copy)]
 pub struct FileInfoBucket {
     pub start: u32,
     pub count: u32,
 }
-
+#[repr(C)]
+#[repr(packed)]
 #[derive(BinRead, Debug, Clone, Copy)]
 pub struct FilePath {
     pub path: HashToIndex,
@@ -189,13 +196,15 @@ pub struct FilePath {
     pub parent: HashToIndex,
     pub file_name: HashToIndex,
 }
-
+#[repr(C)]
+#[repr(packed)]
 #[derive(BinRead, Debug, Clone, Copy)]
 pub struct FileInfoIndex {
     pub dir_offset_index: u32,
     pub file_info_index: FileInfoIdx,
 }
-
+#[repr(C)]
+#[repr(packed)]
 #[derive(BinRead, Debug, Clone)]
 pub struct DirInfo {
     pub path_hash: u32,
@@ -217,16 +226,19 @@ pub struct StreamData {
     pub offset: u64,
 }
 
+#[repr(C)]
+#[repr(packed)]
 #[derive(BinRead, Debug, Clone)]
 pub struct DirectoryOffset {
     pub offset: u64,
     pub decomp_size: u32,
     pub size: u32,
-    pub file_data_start_index: u32,
-    pub file_data_count: u32,
+    pub file_info_start_index: u32,
+    pub file_info_count: u32,
     pub resource_index: u32,
 }
-
+#[repr(C)]
+#[repr(packed)]
 #[derive(BinRead, Debug, Clone, Copy)]
 pub struct FileInfo {
     pub file_path_index: FilePathIdx,
@@ -253,15 +265,16 @@ pub struct FileInfoFlags {
     pub unknown3: bool,
     pub unused4: B10,
 }
-
+#[repr(C)]
+#[repr(packed)]
 #[derive(BinRead, Debug, Clone, Copy)]
 pub struct FileInfoToFileData {
     pub folder_offset_index: u32,
     pub file_data_index: FileDataIdx,
     pub file_info_index_and_flag: u32,
 }
-
 #[repr(C)]
+#[repr(packed)]
 #[derive(BinRead, Debug, Clone, Copy)]
 pub struct FileData {
     pub offset_in_folder: u32,
