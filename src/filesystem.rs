@@ -188,7 +188,6 @@ pub struct FileInfoBucket {
     pub count: u32,
 }
 #[repr(C)]
-#[repr(packed)]
 #[derive(BinRead, Debug, Clone, Copy)]
 pub struct FilePath {
     pub path: HashToIndex,
@@ -197,14 +196,12 @@ pub struct FilePath {
     pub file_name: HashToIndex,
 }
 #[repr(C)]
-#[repr(packed)]
 #[derive(BinRead, Debug, Clone, Copy)]
 pub struct FileInfoIndex {
     pub dir_offset_index: u32,
     pub file_info_index: FileInfoIdx,
 }
 #[repr(C)]
-#[repr(packed)]
 #[derive(BinRead, Debug, Clone)]
 pub struct DirInfo {
     pub path_hash: u32,
@@ -238,7 +235,6 @@ pub struct DirectoryOffset {
     pub resource_index: u32,
 }
 #[repr(C)]
-#[repr(packed)]
 #[derive(BinRead, Debug, Clone, Copy)]
 pub struct FileInfo {
     pub file_path_index: FilePathIdx,
@@ -266,7 +262,6 @@ pub struct FileInfoFlags {
     pub unused4: B10,
 }
 #[repr(C)]
-#[repr(packed)]
 #[derive(BinRead, Debug, Clone, Copy)]
 pub struct FileInfoToFileData {
     pub folder_offset_index: u32,
@@ -274,7 +269,6 @@ pub struct FileInfoToFileData {
     pub file_info_index_and_flag: u32,
 }
 #[repr(C)]
-#[repr(packed)]
 #[derive(BinRead, Debug, Clone, Copy)]
 pub struct FileData {
     pub offset_in_folder: u32,
