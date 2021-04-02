@@ -12,7 +12,7 @@ license = "MIT"
 crate-type = ["lib", "cdylib"]
 
 [dependencies]
-binread = { version = "2", path = "../binread/binread" }
+binread = { version = "2" }
 modular-bitfield = "0.10"
 thiserror = "1"
 crc32fast = "1.2"
