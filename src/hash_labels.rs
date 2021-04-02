@@ -43,7 +43,7 @@ impl HashLabels {
 }
 
 impl Hash40 {
-    pub fn label<'a>(self, labels: &'a HashLabels) -> Option<&'a str> {
+    pub fn label(self, labels: &HashLabels) -> Option<&str> {
         labels.labels.get(&self).map(|x| &**x)
     }
 

@@ -24,7 +24,7 @@ impl<R: std::io::Read + std::io::Seek> SeekRead for R {}
 
 /// A struct representing the data.arc file
 #[derive(BinRead)]
-#[br(magic = 0xABCDEF9876543210_u64)]
+#[br(magic = 0xABCD_EF98_7654_3210_u64)]
 pub struct ArcFile {
     pub stream_section_offset: u64,
     pub file_section_offset: u64,

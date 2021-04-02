@@ -34,7 +34,7 @@ impl BinRead for CompressedFileSystem {
         let compressed = Cursor::new(compressed);
         let mut decompressed = Cursor::new(crate::zstd_backend::decode_all(compressed)?);
 
-        FileSystem::read_options(&mut decompressed, options, args)
+        FileSystem::read_options(&mut decompressed, options, ())
             .map(CompressedFileSystem)
     }
 }
