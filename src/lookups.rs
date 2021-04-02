@@ -137,9 +137,7 @@ pub trait ArcLookup {
                         let hash = hash_to_path.hash40();
                         let file_info = self.get_file_info_from_hash(hash).ok()?;
                         let file_in_folder = self.get_file_in_folder(file_info, region);
-                        let is_same_fd_index = unsafe {
-                            file_in_folder.file_data_index == file_data_index
-                        };
+                        let is_same_fd_index = file_in_folder.file_data_index == file_data_index;
                         if is_same_fd_index {
                             Some(hash)
                         } else {

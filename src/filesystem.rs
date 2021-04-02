@@ -223,9 +223,8 @@ pub struct StreamData {
     pub offset: u64,
 }
 
-#[repr(C)]
 #[repr(packed)]
-#[derive(BinRead, Debug, Clone)]
+#[derive(BinRead, Debug, Clone, Copy)]
 pub struct DirectoryOffset {
     pub offset: u64,
     pub decomp_size: u32,
