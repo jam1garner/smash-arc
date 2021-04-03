@@ -191,15 +191,15 @@ pub trait ArcLookup {
     }
 
     fn get_file_info_from_path_index(&self, path_index: FilePathIdx) -> &FileInfo {
-        let index = self.get_file_paths()[usize::from(path_index)].path.index() as usize;
-        let index = usize::from(self.get_file_info_indices()[index].file_info_index);
+        let index = self.get_file_paths()[path_index].path.index() as usize;
+        let index = self.get_file_info_indices()[index].file_info_index;
 
         &self.get_file_infos()[index]
     }
 
     fn get_file_info_from_path_index_mut(&mut self, path_index: FilePathIdx) -> &mut FileInfo {
-        let index = self.get_file_paths()[usize::from(path_index)].path.index() as usize;
-        let index = usize::from(self.get_file_info_indices()[index].file_info_index);
+        let index = self.get_file_paths()[path_index].path.index() as usize;
+        let index = self.get_file_info_indices()[index].file_info_index;
 
         &mut self.get_file_infos_mut()[index]
     }
@@ -208,7 +208,7 @@ pub trait ArcLookup {
         if file_info.flags.is_regional() {
             self.get_file_info_to_datas()[usize::from(file_info.info_to_data_index) + (region as usize)]
         } else {
-            self.get_file_info_to_datas()[usize::from(file_info.info_to_data_index)]
+            self.get_file_info_to_datas()[file_info.info_to_data_index]
         }
     }
 
@@ -216,7 +216,7 @@ pub trait ArcLookup {
         if file_info.flags.is_regional() {
             &mut self.get_file_info_to_datas_mut()[usize::from(file_info.info_to_data_index) + (region as usize)]
         } else {
-            &mut self.get_file_info_to_datas_mut()[usize::from(file_info.info_to_data_index)]
+            &mut self.get_file_info_to_datas_mut()[file_info.info_to_data_index]
         }
     }
 
@@ -227,13 +227,13 @@ pub trait ArcLookup {
     fn get_file_data(&self, file_info: &FileInfo, region: Region) -> &FileData {
         let file_in_folder = self.get_file_in_folder(file_info, region);
 
-        &self.get_file_datas()[usize::from(file_in_folder.file_data_index)]
+        &self.get_file_datas()[file_in_folder.file_data_index]
     }
 
     fn get_file_data_mut(&mut self, file_info: &FileInfo, region: Region) -> &mut FileData {
         let file_in_folder = self.get_file_in_folder(file_info, region);
 
-        &mut self.get_file_datas_mut()[usize::from(file_in_folder.file_data_index)]
+        &mut self.get_file_datas_mut()[file_in_folder.file_data_index]
     }
 
     fn get_folder_offset(&self, file_info: &FileInfo, region: Region) -> u64 {
@@ -279,7 +279,7 @@ pub trait ArcLookup {
         fn inner<Arc: ArcLookup + ?Sized>(arc: &Arc, hash: Hash40, region: Region) -> Result<FileMetadata, LookupError> {
             match arc.get_file_path_index_from_hash(hash) {
                 Ok(path_index) => {
-                    let file_path = &arc.get_file_paths()[usize::from(path_index)];
+                    let file_path = &arc.get_file_paths()[path_index];
                     let file_info = arc.get_file_info_from_path_index(path_index);
                     let folder_offset = arc.get_folder_offset(file_info, region);
                     let file_data = arc.get_file_data(&file_info, region);
