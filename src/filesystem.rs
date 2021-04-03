@@ -284,3 +284,27 @@ pub struct FileDataFlags {
     pub use_zstd: bool,
     pub unk: B30,
 }
+
+
+macro_rules! impl_fs_index {
+    ($to_index:ty, $index_with:ty) => {
+        impl std::ops::Index<$index_with> for [$to_index] {
+            type Output = $to_index;
+            fn index(&self, index: $index_with) -> &Self::Output {
+                self.get(usize::from(index)).unwrap()
+            }
+        }
+
+        impl std::ops::IndexMut<$index_with> for [$to_index] {
+            fn index_mut(&mut self, index: $index_with) -> &mut Self::Output {
+                self.get_mut(usize::from(index)).unwrap()
+            }
+        }
+    }
+}
+
+impl_fs_index!(FilePath, FilePathIdx);
+impl_fs_index!(FileInfoIndex, FileInfoIndiceIdx);
+impl_fs_index!(FileInfo, FileInfoIdx);
+impl_fs_index!(FileInfoToFileData, InfoToDataIdx);
+impl_fs_index!(FileData, FileDataIdx);
