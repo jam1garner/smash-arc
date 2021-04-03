@@ -204,8 +204,7 @@ pub struct FileInfoIndex {
 #[repr(C)]
 #[derive(BinRead, Debug, Clone)]
 pub struct DirInfo {
-    pub path_hash: u32,
-    pub dir_offset_index: u32,
+    pub path: HashToIndex,
     pub name: Hash40,
     pub parent: Hash40,
     pub extra_dis_re: u32,
