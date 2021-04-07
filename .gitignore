@@ -2,3 +2,4 @@
 Cargo.lock
 data.arc
 hash_labels.txt
+link.ld
