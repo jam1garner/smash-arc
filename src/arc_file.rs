@@ -36,7 +36,7 @@ pub struct ArcFile {
     pub patch_section: u64,
 
     #[br(calc = Mutex::new(Box::new(Cursor::new([])) as _))]
-    pub reader: Mutex<Box<dyn SeekRead>>,
+    pub reader: Mutex<Box<dyn SeekRead + Send>>,
 
     #[cfg(feature = "dir-listing")]
     #[br(calc = generate_dir_listing(&file_system))]
@@ -141,7 +141,7 @@ impl ArcFile {
         Self::from_reader(reader)
     }
 
-    pub fn from_reader<R: SeekRead + 'static>(mut reader: R) -> BinResult<Self> {
+    pub fn from_reader<R: SeekRead + Send + 'static>(mut reader: R) -> BinResult<Self> {
         let arc: Self = reader.read_le()?;
 
         *arc.reader.lock().unwrap() = Box::new(reader);

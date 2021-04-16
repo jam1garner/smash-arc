@@ -108,7 +108,7 @@ use std::sync::MutexGuard;
 
 // Wrapper type for implementing Read + Seek for MutexGuard
 #[repr(transparent)]
-struct MutexReader<'a>(MutexGuard<'a, Box<dyn SeekRead + 'static>>);
+struct MutexReader<'a>(MutexGuard<'a, Box<dyn SeekRead + Send + 'static>>);
 
 impl<'a> io::Read for MutexReader<'a> {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
