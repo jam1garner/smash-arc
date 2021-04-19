@@ -61,7 +61,7 @@ impl LoadedArc {
         Self::from_reader(BufReader::new(File::open("rom:/data.arc")?))
     }
 
-    pub fn from_reader<R: SeekRead + 'static>(mut reader: R) -> BinResult<ArcFile> {
+    pub fn from_reader<R: SeekRead + Send + 'static>(mut reader: R) -> BinResult<ArcFile> {
         let arc: ArcFile = reader.read_le()?;
 
         *arc.reader.lock().unwrap() = Box::new(reader);
