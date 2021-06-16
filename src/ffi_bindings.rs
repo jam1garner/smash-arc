@@ -16,6 +16,14 @@ pub unsafe extern "C" fn arc_open(path: *const i8) -> Option<Box<ArcFile>> {
     Some(Box::new(ArcFile::open(path).ok()?))
 }
 
+/// Open an ArcFile from a given IP address.
+/// This is intended for use with [arc-network](https://github.com/jam1garner/arc-network).
+///
+/// **Note:** `Box<ArcFile>` is equivelant in layout to `*mut ArcFile`, but should be treated
+/// as an opaque pointer
+///
+/// **Note:** If you want directory listing to work, be sure to set a hashfile using
+/// [`arc_load_labels`](arc_load_labels)
 #[no_mangle]
 pub unsafe extern "C" fn arc_open_networked(ip: *const i8) -> Option<Box<ArcFile>> {
     let ip = std::ffi::CStr::from_ptr(ip);
@@ -24,6 +32,7 @@ pub unsafe extern "C" fn arc_open_networked(ip: *const i8) -> Option<Box<ArcFile
     Some(Box::new(ArcFile::open_over_network((ip.as_str(), 43022)).ok()?))
 }
 
+/// Frees the memory allocated by [arc_open] or [arc_open_networked].
 #[no_mangle]
 pub extern "C" fn arc_free(_: Box<ArcFile>) {}
 
@@ -57,18 +66,19 @@ pub extern "C" fn arc_get_file_contents_regional(arc: &ArcFile, hash: Hash40, re
     arc.get_file_contents(hash, region).ok().into()
 }
 
+/// Frees the memory allocated by [arc_get_file_contents] or [arc_get_file_contents_regional].
 #[no_mangle]
 pub unsafe extern "C" fn arc_free_file_contents(ffi: FfiBytes) {
     Box::from_raw(std::slice::from_raw_parts_mut(ffi.ptr, ffi.size));
 }
 
-/// Extract a file to a given null-terminated path for the given Hash40
+/// Get file information such as offset and decompressed size for the given [Hash40].
 #[no_mangle]
 pub extern "C" fn arc_get_file_info(arc: &ArcFile, hash: Hash40) -> Option<&FileData> {
     arc.get_file_data_from_hash(hash, Region::UsEnglish).ok()
 }
 
-/// Extract a file to a given null-terminated path for the given Hash40 for a specified region
+/// Get file information such as offset and decompressed size for the given [Hash40] for a specified region.
 #[no_mangle]
 pub extern "C" fn arc_get_file_info_regional(arc: &ArcFile, hash: Hash40, region: Region) -> Option<&FileData> {
     arc.get_file_data_from_hash(hash, region).ok()
@@ -92,7 +102,7 @@ pub unsafe extern "C" fn arc_free_shared_file_list(ffi: FfiVec<Hash40>) {
     Box::from_raw(std::slice::from_raw_parts_mut(ffi.ptr, ffi.size));
 }
 
-/// Extract a file to a given null-terminated path for the given Hash40
+/// Extract a file to a given null-terminated path for the given [Hash40]
 #[no_mangle]
 pub unsafe extern "C" fn arc_extract_file(arc: &ArcFile, hash: Hash40, path: *const i8) -> ExtractResult {
     match arc.get_file_contents(hash, Region::UsEnglish) {
@@ -109,7 +119,7 @@ pub unsafe extern "C" fn arc_extract_file(arc: &ArcFile, hash: Hash40, path: *co
     }
 }
 
-/// Extract a file to a given null-terminated path for the given Hash40 for a given region
+/// Extract a file to a given null-terminated path for the given [Hash40] for a given region
 #[no_mangle]
 pub unsafe extern "C" fn arc_extract_file_regional(arc: &ArcFile, hash: Hash40, path: *const i8, region: Region) -> ExtractResult {
     match arc.get_file_contents(hash, region) {
@@ -127,7 +137,7 @@ pub unsafe extern "C" fn arc_extract_file_regional(arc: &ArcFile, hash: Hash40, 
 }
 
 /// Load hash labels from a given path. 
-/// Returns true on success.
+/// Returns `true` on success.
 #[no_mangle]
 pub unsafe extern "C" fn arc_load_labels(path: *const i8) -> bool {
     let path = std::ffi::CStr::from_ptr(path);
@@ -136,9 +146,7 @@ pub unsafe extern "C" fn arc_load_labels(path: *const i8) -> bool {
     Hash40::set_global_labels_file(path).is_ok()
 }
 
-/// Get a label for a given Hash40
-///
-/// **Note:** Will return null if not found.
+/// Get a label for a given Hash40 or [std::ptr::null_mut] if no label could be found.
 #[no_mangle]
 pub unsafe extern "C" fn arc_hash40_to_str(hash: Hash40) -> *mut i8 {
     let labels = crate::hash_labels::GLOBAL_LABELS.read();
@@ -148,6 +156,7 @@ pub unsafe extern "C" fn arc_hash40_to_str(hash: Hash40) -> *mut i8 {
         .unwrap_or(std::ptr::null_mut())
 } 
 
+/// Frees the memory allocated by [arc_hash40_to_str].
 #[no_mangle]
 pub unsafe extern "C" fn arc_free_str(string: *mut i8) {
     std::ffi::CString::from_raw(string);
