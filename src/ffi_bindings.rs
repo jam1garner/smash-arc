@@ -156,6 +156,13 @@ pub unsafe extern "C" fn arc_hash40_to_str(hash: Hash40) -> *mut i8 {
         .unwrap_or(std::ptr::null_mut())
 } 
 
+/// Hashes a given string and returns the result as a [Hash40].
+#[no_mangle]
+pub unsafe extern "C" fn arc_str_to_hash40(string: &mut i8) -> Hash40 {
+    let string = std::ffi::CString::from_raw(string);
+    hash40::hash40_from_bytes(string.as_bytes())
+} 
+
 /// Frees the memory allocated by [arc_hash40_to_str].
 #[no_mangle]
 pub unsafe extern "C" fn arc_free_str(string: *mut i8) {

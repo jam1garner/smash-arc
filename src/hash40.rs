@@ -83,8 +83,11 @@ impl QuickDir {
 
 // Find the hash40 of a given string
 pub fn hash40(string: &str) -> Hash40 {
-    let bytes = string.as_bytes();
+    hash40_from_bytes(string.as_bytes())
+}
 
+// TODO: Is this worth adding to the public API?
+pub(crate) fn hash40_from_bytes(bytes: &[u8]) -> Hash40 {
     Hash40(((bytes.len() as u64) << 32) + crc32(bytes) as u64)
 }
 
@@ -92,4 +95,19 @@ fn crc32(bytes: &[u8]) -> u32 {
     let mut hasher = Hasher::new();
     hasher.update(bytes);
     hasher.finalize()
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{Hash40, hash40::{hash40_from_bytes, hash40}};
+
+    #[test]
+    fn hash40_path_string() {
+        assert_eq!(Hash40(0x29954022ed), hash40("fighter/mario/model/body/c00/model.numatb"));
+    }
+
+    #[test]
+    fn hash40_path_bytes() {
+        assert_eq!(Hash40(0x29954022ed), hash40_from_bytes("fighter/mario/model/body/c00/model.numatb".as_bytes()));
+    }
 }
