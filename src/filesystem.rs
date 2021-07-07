@@ -201,6 +201,8 @@ pub struct FileInfoIndex {
     pub dir_offset_index: u32,
     pub file_info_index: FileInfoIdx,
 }
+
+/// Also known as MassLoadingGroup
 #[repr(C)]
 #[derive(BinRead, Debug, Clone)]
 pub struct DirInfo {
@@ -210,7 +212,7 @@ pub struct DirInfo {
     pub extra_dis_re: u32,
     pub extra_dis_re_length: u32,
     pub file_info_start_index: u32,
-    pub file_info_count: u32,
+    pub file_count: u32,
     pub child_dir_start_index: u32,
     pub child_dir_count: u32,
     pub flags: u32,
@@ -222,6 +224,7 @@ pub struct StreamData {
     pub offset: u64,
 }
 
+/// Also known as MassLoadingData
 #[repr(packed)]
 #[derive(BinRead, Debug, Clone, Copy)]
 pub struct DirectoryOffset {
@@ -229,8 +232,9 @@ pub struct DirectoryOffset {
     pub decomp_size: u32,
     pub size: u32,
     pub file_info_start_index: u32,
-    pub file_info_count: u32,
-    pub resource_index: u32,
+    pub file_count: u32,
+    // This can be a DirInfo OR a DirectoryOffset index, depending on the flags of the matching DirInfo. Considering checking the tests in lookups.rs for an example.
+    pub directory_index: u32,
 }
 #[repr(C)]
 #[derive(BinRead, Debug, Clone, Copy)]
@@ -259,6 +263,8 @@ pub struct FileInfoFlags {
     pub unknown3: bool,
     pub unused4: B10,
 }
+
+/// file_info_index_and_flag = ((current_info_idx & 0xFFFFFF)) | (original_info_to_data.file_info_index_and_flag & 0xFF) << 24;
 #[repr(C)]
 #[derive(BinRead, Debug, Clone, Copy)]
 pub struct FileInfoToFileData {

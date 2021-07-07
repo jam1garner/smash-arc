@@ -451,132 +451,71 @@ mod tests {
         assert!(extensions.contains("nus3bank"));
     }
 
-    //#[test]
-    // fn test_print_complete_data() {
-    //     let arc = ArcFile::open("H:/Documents/Smash/update/romfs/data_1010.arc").unwrap();
+    fn dir_info_print_filepaths(arc: &ArcFile, dir_info: &DirInfo, labels: &HashLabels) {
+        let start = dir_info.file_info_start_index as usize;
+            let end = (dir_info.file_info_start_index as usize) + (dir_info.file_count as usize);
 
-    //     let labels = crate::hash_labels::HashLabels::from_file("H:/Downloads/hashes.txt").unwrap();
-    //     //dbg!(arc.get_file_metadata("fighter/mewtwo/model/body/c00/model.numshb", Region::UsEnglish).unwrap());
-    //     let file_path_index = dbg!(arc.get_file_path_index_from_hash("fighter/marth/model/body/c00/model.numshb".into()).unwrap());
-    //     dbg!(arc.get_file_info_from_hash("stage/battlefield_s/normal/model/floating_plate_set/battlefield_linegaina_col.nutexb".into()).unwrap());
-    //     let path_idx = arc.get_file_info_from_hash("stage/battlefield_s/normal/model/floating_plate_set/battlefield_linegaina_col.nutexb".into()).unwrap();
-    //     dbg!(arc.get_file_paths()[path_idx.hash_index as usize].path.hash40().label(&labels).unwrap());
-    // }
+            let file_infos = &arc.get_file_infos()[start..end].iter().collect::<Vec<_>>();
 
-    // #[test]
-    // fn test_battlefield() {
-    //     let arc = ArcFile::open("H:/Documents/Smash/update/romfs/data_1010.arc").unwrap();
+            for infos in file_infos {
+                println!("{}", arc.get_file_paths()[infos.file_path_index].path.hash40().label(&labels).unwrap_or("Unk"));
+            }
 
-    //     let labels = crate::hash_labels::HashLabels::from_file("H:/Downloads/hashes.txt").unwrap();
-    //     // let file_path_index = dbg!(arc.get_file_path_index_from_hash("stage/battlefield_l/normal/model/floating_plate_set/battlefield_linegaina_col.nutexb".into()).unwrap());
-    //     let file_path_index = dbg!(arc.get_file_path_index_from_hash("stage/common/shared/model/kumite_itembase2_set/battlefield_linegaina_col.nutexb".into()).unwrap());
-    //     let file_path = dbg!(arc.get_file_paths()[file_path_index as usize]);
-    //     let file_info_index = dbg!(arc.get_file_info_indices()[file_path.path.index() as usize]);
-    //     let file_info = dbg!(arc.get_file_infos()[file_info_index.file_info_index as usize]);
-    // }
+            if dir_info.flags & (0x4 << 24) != 0 { // Redirection
+                //println!("Redirection");
 
-    // #[test]
-    // fn test_stage_common() {
-    //     let arc = ArcFile::open("H:/Documents/Smash/update/romfs/data_1010.arc").unwrap();
+                let dir_offs = arc.get_folder_offsets()[dir_info.path.index() as usize];
 
-    //     let labels = crate::hash_labels::HashLabels::from_file("H:/Downloads/hashes.txt").unwrap();
-    //     // let dir_info = dbg!(arc.get_dir_info_from_hash(Hash40::from("stage/common/shared/model/kumite_itembase2_set")).unwrap());
-    //     let dir_info = dbg!(arc.get_dir_info_from_hash(Hash40::from("stage/common/shared/model/kumite_itembase2_set")).unwrap());
+                if dir_offs.directory_index != 0xFFFFFF { // Index is valid
+                    if dir_info.flags & (0x10 << 24) == 0 { // DirOffset
+                        let dir_offs = arc.get_folder_offsets()[dir_offs.directory_index as usize];
+                        dir_offset_print_filepaths(arc, &dir_offs, labels);
+                    } else { // DirInfo
+                        let dir_info = &arc.get_dir_infos()[dir_offs.directory_index as usize];
+                        dir_info_print_filepaths(arc, dir_info, labels);
+                    }
+                } else {
 
-    //     let start = dir_info.file_name_start_index as usize;
-    //     let end = (dir_info.file_name_start_index as usize) + (dir_info.file_info_count as usize);
+                }
+            } else { // No redirection
+                //println!("No redirection");
+            }
 
-    //     let file_infos = &arc.get_file_infos()[start..end].iter().collect::<Vec<_>>();
-
-    //     let file_path_index = dbg!(arc.get_file_path_index_from_hash("stage/common/shared/model/kumite_itembase2_set/battlefield_linegaina_col.nutexb".into()).unwrap());
-
-    //     for (index, info) in file_infos.iter().enumerate() {
-    //         if info.hash_index == file_path_index {
-    //             dbg!(start + index);
-    //             dbg!(info);
-    //             let file_path = arc.get_file_paths()[info.hash_index as usize];
-    //             let info_to_data = dbg!(arc.get_file_info_to_datas()[info.info_to_data_index as usize]);
-
-    //             let info_to_datas = arc.get_file_info_to_datas();
-
-    //             let idk : Vec<&FileInfoToFileData> = info_to_datas
-    //             .iter()
-    //             .filter_map(|hash_to_path| {
-    //                 if hash_to_path.file_info_index_and_flag == info_to_data.file_info_index_and_flag {
-    //                     Some(hash_to_path)
-    //                 } else {
-    //                     None
-    //                 }
-    //             }).collect();
-
-    //             dbg!(idk);
-    //         }
-    //     }
-    // }
-
-    #[test]
-    fn crash() {
-        let arc = ArcFile::open("H:/Documents/Smash/update/romfs/data_1010.arc").unwrap();
-
-        let labels = crate::hash_labels::HashLabels::from_file("H:/Downloads/hashes.txt").unwrap();
-        let file_path_index = arc.get_file_path_index_from_hash(Hash40::from(154550836855)).unwrap();
-        //let file_path_index = arc.get_file_path_index_from_hash("fighter/marth/model/body/c00/model.numshb".into()).unwrap();
-        dbg!(file_path_index);
+            dir_info_print_children(arc, dir_info, labels);
     }
 
-    // #[test]
-    // fn test_marth_c00() {
-    //     let arc = ArcFile::open("H:/Documents/Smash/update/romfs/data_1010.arc").unwrap();
+    fn dir_offset_print_filepaths(arc: &ArcFile, dir_info: &DirectoryOffset, labels: &HashLabels) {
+        let start = dir_info.file_info_start_index as usize;
+        let end = (dir_info.file_info_start_index as usize) + (dir_info.file_count as usize);
 
-    //     let labels = crate::hash_labels::HashLabels::from_file("H:/Downloads/hashes.txt").unwrap();
-    //     let file_path_index = dbg!(arc.get_file_path_index_from_hash("fighter/marth/model/body/c00/model.numshb".into()).unwrap());
-    //     let file_path = dbg!(arc.get_file_paths()[file_path_index as usize]);
-    //     let file_info_index = dbg!(arc.get_file_info_indices()[file_path.path.index() as usize]);
-    //     let dir_offset = &arc.get_folder_offsets()[file_info_index.dir_offset_index as usize];
-    //     let start = dir_offset.sub_data_start_index as usize;
-    //     let end = dir_offset.sub_data_start_index as usize + dir_offset.sub_data_count as usize;
-    //     let subfiles = arc.get_file_datas()[start..end].iter().collect::<Vec<_>>();
+        let file_infos = &arc.get_file_infos()[start..end].iter().collect::<Vec<_>>();
 
-    //     for subfile in subfiles {
-    //         dbg!(subfile);
-    //     }
-        
-    //     let file_info = dbg!(arc.get_file_infos()[file_info_index.file_info_index as usize]);
-    //     dbg!(file_path.parent.hash40().label(&labels).unwrap());
-    // }
+        for infos in file_infos {
+            println!("{}", arc.get_file_paths()[infos.file_path_index].path.hash40().label(&labels).unwrap());
+        }
+    }
 
-    // #[test]
-    // fn test_marth_c01() {
-    //     let arc = ArcFile::open("H:/Documents/Smash/update/romfs/data_1010.arc").unwrap();
+    fn dir_info_print_children(arc: &ArcFile, dir_info: &DirInfo, labels: &HashLabels) {
+        let start = dir_info.child_dir_start_index as usize;
+        let end = (dir_info.child_dir_start_index as usize) + (dir_info.child_dir_count as usize);
 
-    //     let labels = crate::hash_labels::HashLabels::from_file("H:/Downloads/hashes.txt").unwrap();
-    //     let file_path_index = dbg!(arc.get_file_path_index_from_hash("fighter/marth/model/body/c01/model.numshb".into()).unwrap());
-    //     let file_path = dbg!(arc.get_file_paths()[file_path_index as usize]);
-    //     let file_info_index = dbg!(arc.get_file_info_indices()[file_path.path.index() as usize]);
-    //     let file_info = dbg!(arc.get_file_infos()[file_info_index.file_info_index as usize]);
-    // }
+        let children = &arc.file_system.folder_child_hashes[start..end].iter()
+            .map(|child| &arc.file_system.dir_infos[child.index() as usize])
+            .collect::<Vec<_>>();
 
-    // #[test]
-    // fn test_marth_dir_c00() {
-    //     let arc = ArcFile::open("H:/Documents/Smash/update/romfs/data_1010.arc").unwrap();
+        for &child in children {
+            dir_info_print_filepaths(arc, child, labels);
+        }
+    }
 
-    //     let labels = crate::hash_labels::HashLabels::from_file("H:/Downloads/hashes.txt").unwrap();
-    //     let dir_info = dbg!(arc.get_dir_info_from_hash(Hash40::from("fighter/marth/c01")).unwrap());
+    #[test]
+    fn print_directory_hierarchy() {
+        let arc = ArcFile::open("H:/Documents/Smash/update/romfs/data_1010.arc").unwrap();
+        let labels = crate::hash_labels::HashLabels::from_file("H:/Downloads/hashes.txt").unwrap();
 
-    //     let start = dir_info.file_name_start_index as usize;
-    //     let end = (dir_info.file_name_start_index as usize) + (dir_info.file_info_count as usize);
+        let dir_info = dbg!(arc.get_dir_info_from_hash(Hash40::from("fighter/jack/c00")).unwrap());
 
-    //     let file_infos = &arc.get_file_infos()[start..end].iter().collect::<Vec<_>>();
-
-    //     let file_path_index = dbg!(arc.get_file_path_index_from_hash("fighter/marth/model/body/c01/model.numshb".into()).unwrap());
-
-    //     for (index, info) in file_infos.iter().enumerate() {
-    //         if info.hash_index == file_path_index {
-    //             dbg!(start + index);
-    //             dbg!(info.hash_index_2);
-    //             let file_path = arc.get_file_paths()[info.hash_index as usize];
-    //             dbg!(file_path.path.hash40().label(&labels).unwrap());
-    //         }
-    //     }
-    // }
+        println!("Files:");
+        dir_info_print_filepaths(&arc, &dir_info, &labels);      
+    }
 }
