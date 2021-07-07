@@ -452,6 +452,8 @@ mod tests {
     }
 
     fn dir_info_print_filepaths(arc: &ArcFile, dir_info: &DirInfo, labels: &HashLabels) {
+        dbg!(&dir_info);
+
         let start = dir_info.file_info_start_index as usize;
             let end = (dir_info.file_info_start_index as usize) + (dir_info.file_count as usize);
 
@@ -461,18 +463,20 @@ mod tests {
                 println!("{}", arc.get_file_paths()[infos.file_path_index].path.hash40().label(&labels).unwrap_or("Unk"));
             }
 
-            if dir_info.flags & (0x4 << 24) != 0 { // Redirection
+            if dir_info.flags.redirected() { // Redirection
                 //println!("Redirection");
 
                 let dir_offs = arc.get_folder_offsets()[dir_info.path.index() as usize];
 
                 if dir_offs.directory_index != 0xFFFFFF { // Index is valid
-                    if dir_info.flags & (0x10 << 24) == 0 { // DirOffset
-                        let dir_offs = arc.get_folder_offsets()[dir_offs.directory_index as usize];
-                        dir_offset_print_filepaths(arc, &dir_offs, labels);
-                    } else { // DirInfo
+                    if dir_info.flags.uses_dir_info_index() { // DirInfo
+                        //println!("DirInfo");
                         let dir_info = &arc.get_dir_infos()[dir_offs.directory_index as usize];
                         dir_info_print_filepaths(arc, dir_info, labels);
+                    } else { // DirOffset
+                        //println!("DirOffset");
+                        let dir_offs = arc.get_folder_offsets()[dir_offs.directory_index as usize];
+                        dir_offset_print_filepaths(arc, &dir_offs, labels);
                     }
                 } else {
 
@@ -481,6 +485,7 @@ mod tests {
                 //println!("No redirection");
             }
 
+            println!("Printing children");
             dir_info_print_children(arc, dir_info, labels);
     }
 
@@ -516,6 +521,6 @@ mod tests {
         let dir_info = dbg!(arc.get_dir_info_from_hash(Hash40::from("fighter/jack/c00")).unwrap());
 
         println!("Files:");
-        dir_info_print_filepaths(&arc, &dir_info, &labels);      
+        dir_info_print_filepaths(&arc, &dir_info, &labels); 
     }
 }

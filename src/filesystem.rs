@@ -215,7 +215,18 @@ pub struct DirInfo {
     pub file_count: u32,
     pub child_dir_start_index: u32,
     pub child_dir_count: u32,
-    pub flags: u32,
+    pub flags: DirInfoFlags,
+}
+
+#[bitfield]
+#[derive(BinRead, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[br(map = Self::from_bytes)]
+pub struct DirInfoFlags {
+    pub unk1: B26,
+    pub redirected: bool,
+    pub unk2: bool,
+    pub uses_dir_info_index: bool,
+    pub unk3: B3,
 }
 
 #[derive(BinRead, Debug, Clone, Copy)]
