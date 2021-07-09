@@ -4,14 +4,12 @@ use std::{
     io::BufReader,
 };
 
-use crate::{Hash40, LoadedDirInfo, LookupError, loaded_arc::LoadedArc};
+use crate::{Hash40, LookupError, loaded_arc::LoadedArc};
 use crate::ArcLookup;
 use crate::SeekRead;
 use crate::filesystem::*;
 
 impl ArcLookup for LoadedArc {
-    type DirInfoType = LoadedDirInfo;
-
     fn get_file_info_buckets(&self) -> &[FileInfoBucket] {
         unsafe {
             let table_size = (*self.file_info_buckets).count;
@@ -35,7 +33,7 @@ impl ArcLookup for LoadedArc {
         }
     }
 
-    fn get_dir_infos(&self) -> &[LoadedDirInfo] {
+    fn get_dir_infos(&self) -> &[DirInfo] {
         unsafe {
             let fs = *self.fs_header;
             let table_size = fs.folder_count;
@@ -165,20 +163,6 @@ impl ArcLookup for LoadedArc {
 
     fn get_shared_section_offset(&self) -> u64 {
         self.shared_section_offset
-    }
-
-    fn get_dir_info_from_hash<Hash: Into<Hash40> + ?Sized>(&self, hash: Hash) -> Result<&LoadedDirInfo, LookupError> {
-        fn inner(arc: &LoadedArc, hash: Hash40) -> Result<&LoadedDirInfo, LookupError> {
-            let dir_hash_to_info_index = arc.get_dir_hash_to_info_index();
-
-            let index = dir_hash_to_info_index.binary_search_by_key(&hash, |dir| dir.hash40())
-                .map(|index| dir_hash_to_info_index[index].index() as usize)
-                .map_err(|_| LookupError::Missing)?;
-
-            Ok(&arc.get_dir_infos()[index])
-        }
-
-        inner(self, hash.into())
     }
 
     fn get_file_reader<'a>(&'a self) -> Box<dyn SeekRead + 'a> {

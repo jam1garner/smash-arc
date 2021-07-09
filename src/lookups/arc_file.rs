@@ -2,8 +2,6 @@ use std::io;
 use crate::*;
 
 impl ArcLookup for ArcFile {
-    type DirInfoType = DirInfo;
-
     fn get_file_info_buckets(&self) -> &[FileInfoBucket] {
         &self.file_system.file_info_buckets
     }
@@ -86,16 +84,6 @@ impl ArcLookup for ArcFile {
 
     fn get_shared_section_offset(&self) -> u64 {
         self.shared_section_offset
-    }
-
-    fn get_dir_info_from_hash<Hash: Into<Hash40> + ?Sized>(&self, hash: Hash) -> Result<&DirInfo, LookupError> {
-        let dir_hash_to_info_index = self.get_dir_hash_to_info_index();
-
-        let index = dir_hash_to_info_index.binary_search_by_key(&hash.into(), |dir| dir.hash40())
-            .map(|index| dir_hash_to_info_index[index].index() as usize)
-            .map_err(|_| LookupError::Missing)?;
-            
-        Ok(&self.get_dir_infos()[index])
     }
 
     fn get_file_reader<'a>(&'a self) -> Box<dyn SeekRead + 'a> {

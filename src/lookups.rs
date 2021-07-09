@@ -28,12 +28,10 @@ mod loaded_arc;
 /// To implement, provide accessors for the needed data and all the lookups themselves will be
 /// implemented for you.
 pub trait ArcLookup {
-    type DirInfoType;
-
     fn get_file_info_buckets(&self) -> &[FileInfoBucket];
     fn get_file_hash_to_path_index(&self) -> &[HashToIndex];
     fn get_dir_hash_to_info_index(&self) -> &[HashToIndex];
-    fn get_dir_infos(&self) -> &[Self::DirInfoType];
+    fn get_dir_infos(&self) -> &[DirInfo];
     fn get_file_paths(&self) -> &[FilePath];
     fn get_file_info_indices(&self) -> &[FileInfoIndex];
     fn get_file_infos(&self) -> &[FileInfo];
@@ -51,8 +49,6 @@ pub trait ArcLookup {
     fn get_file_section_offset(&self) -> u64;
     fn get_stream_section_offset(&self) -> u64;
     fn get_shared_section_offset(&self) -> u64;
-
-    fn get_dir_info_from_hash<Hash: Into<Hash40> + ?Sized>(&self, hash: Hash) -> Result<&Self::DirInfoType, LookupError>;
     
     // mutable access
     fn get_file_infos_mut(&mut self) -> &mut [FileInfo];
@@ -67,6 +63,20 @@ pub trait ArcLookup {
                 LookupError::Missing => self.get_stream_file_contents(hash),
                 err => Err(err),
             })
+    }
+
+    fn get_dir_info_from_hash<Hash: Into<Hash40>>(&self, hash: Hash) -> Result<&DirInfo, LookupError> {
+        fn inner<Arc: ArcLookup + ?Sized>(arc: &Arc, hash: Hash40) -> Result<&DirInfo, LookupError> {
+            let dir_hash_to_info_index = arc.get_dir_hash_to_info_index();
+
+            let index = dir_hash_to_info_index.binary_search_by_key(&hash, |dir| dir.hash40())
+                .map(|index| dir_hash_to_info_index[index].index() as usize)
+                .map_err(|_| LookupError::Missing)?;
+
+            Ok(&arc.get_dir_infos()[index])
+        }
+
+        inner(self, hash.into())
     }
 
     fn get_nonstream_file_contents<Hash: Into<Hash40>>(&self, hash: Hash, region: Region) -> Result<Vec<u8>, LookupError> {
