@@ -396,6 +396,31 @@ impl FileInfoBucket {
     }
 }
 
+impl DirInfo {
+    fn file_info_range(self) -> Range<usize> {
+        let start = self.file_info_start_index as usize;
+        let end = start + self.file_count as usize;
+
+        start..end
+    }
+
+    fn children_range(self) -> Range<usize> {
+        let start = self.child_dir_start_index as usize;
+        let end = start + self.child_dir_count as usize;
+
+        start..end
+    }
+}
+
+impl DirectoryOffset {
+    fn range(self) -> Range<usize> {
+        let start = self.file_start_index as usize;
+        let end = start + self.file_count as usize;
+
+        start..end
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -482,10 +507,9 @@ mod tests {
     fn dir_info_print_filepaths(arc: &ArcFile, dir_info: &DirInfo, labels: &HashLabels) {
         dbg!(&dir_info);
 
-        let start = dir_info.file_info_start_index as usize;
-            let end = (dir_info.file_info_start_index as usize) + (dir_info.file_count as usize);
+        
 
-            let file_infos = &arc.get_file_infos()[start..end].iter().collect::<Vec<_>>();
+            let file_infos = &arc.get_file_infos()[dir_info.file_info_range()].iter().collect::<Vec<_>>();
 
             for infos in file_infos {
                 println!("{}", arc.get_file_paths()[infos.file_path_index].path.hash40().label(&labels).unwrap_or("Unk"));
