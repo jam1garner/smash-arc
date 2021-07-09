@@ -252,6 +252,24 @@ pub trait ArcLookup {
         self.get_folder_offsets()[file_in_folder.folder_offset_index as usize].offset
     }
 
+    fn get_directory_dependency(&self, dir_info: &DirInfo) -> Option<RedirectionType> {
+        if dir_info.flags.redirected() {
+            let directory_index = self.get_folder_offsets()[dir_info.path.index() as usize].directory_index;
+
+            if directory_index != 0xFFFFFF {
+                if dir_info.flags.is_symlink() {
+                    Some(RedirectionType::Symlink(self.get_dir_infos()[directory_index as usize]))
+                } else {
+                    Some(RedirectionType::Shared(self.get_folder_offsets()[directory_index as usize]))
+                }
+            } else {
+                None
+            }
+        } else {
+            None
+        }
+    }
+
     fn read_file_data(&self, file_data: &FileData, folder_offset: u64) -> Result<Vec<u8>, LookupError> {
         let offset = folder_offset + self.get_file_section_offset() + ((file_data.offset_in_folder as u64) <<  2);
 
@@ -473,35 +491,29 @@ mod tests {
                 println!("{}", arc.get_file_paths()[infos.file_path_index].path.hash40().label(&labels).unwrap_or("Unk"));
             }
 
-            if dir_info.flags.redirected() { // Redirection
-                //println!("Redirection");
+            if let Some(dep) = arc.get_directory_dependency(dir_info) {
+                println!("Redirection");
 
-                let dir_offs = arc.get_folder_offsets()[dir_info.path.index() as usize];
-
-                if dir_offs.directory_index != 0xFFFFFF { // Index is valid
-                    if dir_info.flags.uses_dir_info_index() { // DirInfo
-                        //println!("DirInfo");
-                        let dir_info = &arc.get_dir_infos()[dir_offs.directory_index as usize];
-                        dir_info_print_filepaths(arc, dir_info, labels);
-                    } else { // DirOffset
-                        //println!("DirOffset");
-                        let dir_offs = arc.get_folder_offsets()[dir_offs.directory_index as usize];
+                match dep {
+                    RedirectionType::Symlink(dir_info) => {
+                        println!("DirInfo");
+                        dir_info_print_filepaths(arc, &dir_info, labels);
+                    },
+                    RedirectionType::Shared(dir_offs) => {
+                        println!("DirOffset");
                         dir_offset_print_filepaths(arc, &dir_offs, labels);
-                    }
-                } else {
-
+                    },
                 }
-            } else { // No redirection
-                //println!("No redirection");
-            }
+            };
 
-            println!("Printing children");
-            dir_info_print_children(arc, dir_info, labels);
+            // println!("Printing children");
+            // dir_info_print_children(arc, dir_info, labels);
     }
 
     fn dir_offset_print_filepaths(arc: &ArcFile, dir_info: &DirectoryOffset, labels: &HashLabels) {
-        let start = dir_info.file_info_start_index as usize;
-        let end = (dir_info.file_info_start_index as usize) + (dir_info.file_count as usize);
+        dbg!(&dir_info);
+        let start = dir_info.file_start_index as usize;
+        let end = (dir_info.file_start_index as usize) + (dir_info.file_count as usize);
 
         let file_infos = &arc.get_file_infos()[start..end].iter().collect::<Vec<_>>();
 

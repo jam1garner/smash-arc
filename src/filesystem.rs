@@ -204,7 +204,7 @@ pub struct FileInfoIndex {
 
 /// Also known as MassLoadingGroup
 #[repr(C)]
-#[derive(BinRead, Debug, Clone)]
+#[derive(BinRead, Debug, Clone, Copy)]
 pub struct DirInfo {
     pub path: HashToIndex,
     pub name: Hash40,
@@ -218,6 +218,13 @@ pub struct DirInfo {
     pub flags: DirInfoFlags,
 }
 
+#[repr(C)]
+#[derive(Debug, Clone)]
+pub enum RedirectionType {
+    Symlink(DirInfo),
+    Shared(DirectoryOffset),
+}
+
 #[bitfield]
 #[derive(BinRead, Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[br(map = Self::from_bytes)]
@@ -225,7 +232,7 @@ pub struct DirInfoFlags {
     pub unk1: B26,
     pub redirected: bool,
     pub unk2: bool,
-    pub uses_dir_info_index: bool,
+    pub is_symlink: bool,
     pub unk3: B3,
 }
 
@@ -242,7 +249,7 @@ pub struct DirectoryOffset {
     pub offset: u64,
     pub decomp_size: u32,
     pub size: u32,
-    /// Is either a FileInfo or a FileData index depending on if the DirInfo is shared or not
+    /// FileData index if using DirInfo.path.index(), FileInfo if redirected from a DirectoryOffset.directory_index
     pub file_start_index: u32,
     pub file_count: u32,
     /// This can be a DirInfo OR a DirectoryOffset index, depending on the flags of the matching DirInfo. Considering checking the tests in lookups.rs for an example.
