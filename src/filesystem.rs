@@ -242,11 +242,13 @@ pub struct DirectoryOffset {
     pub offset: u64,
     pub decomp_size: u32,
     pub size: u32,
-    pub file_info_start_index: u32,
+    /// Is either a FileInfo or a FileData index depending on if the DirInfo is shared or not
+    pub file_start_index: u32,
     pub file_count: u32,
-    // This can be a DirInfo OR a DirectoryOffset index, depending on the flags of the matching DirInfo. Considering checking the tests in lookups.rs for an example.
+    /// This can be a DirInfo OR a DirectoryOffset index, depending on the flags of the matching DirInfo. Considering checking the tests in lookups.rs for an example.
     pub directory_index: u32,
 }
+
 #[repr(C)]
 #[derive(BinRead, Debug, Clone, Copy)]
 pub struct FileInfo {
