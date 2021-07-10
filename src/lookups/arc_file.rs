@@ -18,6 +18,10 @@ impl ArcLookup for ArcFile {
         &self.file_system.dir_infos
     }
 
+    fn get_dir_infos_mut(&mut self) -> &mut [DirInfo] {
+        &mut self.file_system.dir_infos
+    }
+
     fn get_file_paths(&self) -> &[FilePath] {
         &self.file_system.file_paths
     }
@@ -52,6 +56,10 @@ impl ArcLookup for ArcFile {
 
     fn get_folder_offsets(&self) -> &[DirectoryOffset] {
         &self.file_system.folder_offsets
+    }
+
+    fn get_folder_offsets_mut(&mut self) -> &mut [DirectoryOffset] {
+        &mut self.file_system.folder_offsets
     }
 
     fn get_stream_entries(&self) -> &[StreamEntry] {

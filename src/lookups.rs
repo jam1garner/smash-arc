@@ -52,8 +52,10 @@ pub trait ArcLookup {
     
     // mutable access
     fn get_file_infos_mut(&mut self) -> &mut [FileInfo];
+    fn get_dir_infos_mut(&mut self) -> &mut [DirInfo];
     fn get_file_datas_mut(&mut self) -> &mut [FileData];
     fn get_file_info_to_datas_mut(&mut self) -> &mut [FileInfoToFileData];
+    fn get_folder_offsets_mut(&mut self) -> &mut [DirectoryOffset];
     
     fn get_file_contents<Hash: Into<Hash40>>(&self, hash: Hash, region: Region) -> Result<Vec<u8>, LookupError> {
         let hash = hash.into();
@@ -74,6 +76,20 @@ pub trait ArcLookup {
                 .map_err(|_| LookupError::Missing)?;
 
             Ok(&arc.get_dir_infos()[index])
+        }
+
+        inner(self, hash.into())
+    }
+
+    fn get_dir_info_from_hash_mut<Hash: Into<Hash40>>(&mut self, hash: Hash) -> Result<&mut DirInfo, LookupError> {
+        fn inner<Arc: ArcLookup + ?Sized>(arc: &mut Arc, hash: Hash40) -> Result<&mut DirInfo, LookupError> {
+            let dir_hash_to_info_index = arc.get_dir_hash_to_info_index();
+
+            let index = dir_hash_to_info_index.binary_search_by_key(&hash, |dir| dir.hash40())
+                .map(|index| dir_hash_to_info_index[index].index() as usize)
+                .map_err(|_| LookupError::Missing)?;
+
+            Ok(&mut arc.get_dir_infos_mut()[index])
         }
 
         inner(self, hash.into())
@@ -397,7 +413,7 @@ impl FileInfoBucket {
 }
 
 impl DirInfo {
-    fn file_info_range(self) -> Range<usize> {
+    pub fn file_info_range(self) -> Range<usize> {
         let start = self.file_info_start_index as usize;
         let end = start + self.file_count as usize;
 
@@ -413,7 +429,7 @@ impl DirInfo {
 }
 
 impl DirectoryOffset {
-    fn range(self) -> Range<usize> {
+    pub fn range(self) -> Range<usize> {
         let start = self.file_start_index as usize;
         let end = start + self.file_count as usize;
 
