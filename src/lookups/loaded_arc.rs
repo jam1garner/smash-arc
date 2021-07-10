@@ -4,7 +4,7 @@ use std::{
     io::BufReader,
 };
 
-use crate::{Hash40, LookupError, loaded_arc::LoadedArc};
+use crate::loaded_arc::LoadedArc;
 use crate::ArcLookup;
 use crate::SeekRead;
 use crate::filesystem::*;

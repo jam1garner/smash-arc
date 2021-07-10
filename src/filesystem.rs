@@ -203,6 +203,7 @@ pub struct FileInfoIndex {
 }
 
 /// Also known as MassLoadingGroup
+#[repr(C)]
 #[cfg_attr(feature = "smash-runtime", repr(packed))]
 #[derive(BinRead, Debug, Clone, Copy)]
 pub struct DirInfo {
