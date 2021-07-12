@@ -33,6 +33,7 @@
 //! * `smash-runtime` = Enables features for running under the context of Smash Ultimate itself
 //! (enable Aarch64 crc32 hardware acceleration, enable parsing the Arc from the game's memory
 //! layout)
+//! * `search` = Enable functionality to fuzzy search [`ArcFile`]s
 //! 
 //! * ZSTD backends
 //!   * `libzstd` - Recommended for use on platforms it builds for

@@ -184,12 +184,14 @@ pub extern "C" fn arc_get_file_count(arc: &ArcFile) -> u64 {
     arc.file_system.file_paths.len() as u64 + arc.file_system.stream_entries.len() as u64
 }
 
+/// Generates a cache to aid in faster fuzzy searching
 #[cfg(feature = "search")]
 #[no_mangle]
 pub extern "C" fn arc_generate_search_cache(arc: &ArcFile) -> Box<crate::search::SearchCache> {
     Box::new(arc.generate_search_cache())
 }
 
+/// Searches for a given path. Requires labels to be loaded and a search cache be generated
 #[cfg(feature = "search")]
 #[no_mangle]
 pub unsafe fn arc_search_files(
