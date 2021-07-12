@@ -48,6 +48,9 @@ mod zstd_backend;
 mod ffi_bindings;
 mod table_indices;
 
+#[cfg(feature = "search")]
+mod search;
+
 #[cfg(feature = "smash-runtime")]
 mod loaded_arc;
 mod arc_file;

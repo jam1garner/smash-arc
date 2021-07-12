@@ -170,19 +170,39 @@ pub unsafe extern "C" fn arc_free_str(string: *mut i8) {
 }
 
 #[no_mangle]
-pub fn arc_get_file_metadata(arc: &ArcFile, hash: Hash40) -> crate::lookups::FileMetadata {
+pub extern "C" fn arc_get_file_metadata(arc: &ArcFile, hash: Hash40) -> crate::lookups::FileMetadata {
     arc.get_file_metadata(hash, Region::UsEnglish).unwrap()
 }
 
 #[no_mangle]
-pub fn arc_get_file_metadata_regional(arc: &ArcFile, hash: Hash40, region: Region) -> crate::lookups::FileMetadata {
+pub extern "C" fn arc_get_file_metadata_regional(arc: &ArcFile, hash: Hash40, region: Region) -> crate::lookups::FileMetadata {
     arc.get_file_metadata(hash, region).unwrap()
 }
 
 #[no_mangle]
-pub fn arc_get_file_count(arc: &ArcFile) -> u64 {
+pub extern "C" fn arc_get_file_count(arc: &ArcFile) -> u64 {
     arc.file_system.file_paths.len() as u64 + arc.file_system.stream_entries.len() as u64
 }
+
+#[cfg(feature = "search")]
+#[no_mangle]
+pub extern "C" fn arc_generate_search_cache(arc: &ArcFile) -> Box<crate::search::SearchCache> {
+    Box::new(arc.generate_search_cache())
+}
+
+#[cfg(feature = "search")]
+#[no_mangle]
+pub unsafe fn arc_search_files(
+    cache: &crate::search::SearchCache,
+    search_term: *const i8,
+    max_files: usize,
+) -> FfiVec<Hash40> {
+    let term = std::ffi::CStr::from_ptr(search_term);
+    let term = term.to_string_lossy();
+    let labels = crate::hash_labels::GLOBAL_LABELS.read();
+
+    Some(cache.search(&term, &labels, max_files)).into()
+} 
 
 #[repr(u8)]
 pub enum ExtractResult {

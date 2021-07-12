@@ -25,11 +25,15 @@ lazy_static = { version = "1.4", optional = true }
 
 network-reader-adapter = { version = "0.1", optional = true }
 
+fuzzy-matcher = { version = "0.3", optional = true }
+rayon = { version = "1.5", optional = true }
+
 [features]
 default = ["dir-listing", "network"]
 network = ["network-reader-adapter"]
 dir-listing = ["global-hashes"]
 global-hashes = ["lazy_static", "parking_lot"]
+search = ["fuzzy-matcher", "rayon"]
 smash-runtime = ["crc32fast/nightly"]
 
 # Recommended for use on platforms it builds for

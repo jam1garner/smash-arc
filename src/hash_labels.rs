@@ -6,7 +6,7 @@ use crate::{hash40, Hash40};
 use parking_lot::RwLock;
 
 pub struct HashLabels {
-    labels: HashMap<Hash40, String>,
+    pub(crate) labels: HashMap<Hash40, String>,
 }
 
 impl HashLabels {
@@ -75,6 +75,14 @@ lazy_static::lazy_static! {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[cfg(feature = "search")]
+    #[test]
+    fn search_labels() {
+        let labels = HashLabels::from_file("hash_labels.txt").unwrap();
+        let before = std::time::Instant::now();
+        let matches = labels.get_ordered_matches("mar");
+    }
 
     #[test]
     fn from_string_line_feed() {
