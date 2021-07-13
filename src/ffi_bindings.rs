@@ -29,7 +29,9 @@ pub unsafe extern "C" fn arc_open_networked(ip: *const i8) -> Option<Box<ArcFile
     let ip = std::ffi::CStr::from_ptr(ip);
     let ip = ip.to_string_lossy().into_owned();
 
-    Some(Box::new(ArcFile::open_over_network((ip.as_str(), 43022)).ok()?))
+    Some(Box::new(
+        ArcFile::open_over_network((ip.as_str(), 43022)).ok()?,
+    ))
 }
 
 /// Frees the memory allocated by [arc_open] or [arc_open_networked].
@@ -62,7 +64,11 @@ pub extern "C" fn arc_get_file_contents(arc: &ArcFile, hash: Hash40) -> FfiBytes
 
 /// Get an owned slice of the file contents for a given file, picking a specific region
 #[no_mangle]
-pub extern "C" fn arc_get_file_contents_regional(arc: &ArcFile, hash: Hash40, region: Region) -> FfiBytes {
+pub extern "C" fn arc_get_file_contents_regional(
+    arc: &ArcFile,
+    hash: Hash40,
+    region: Region,
+) -> FfiBytes {
     arc.get_file_contents(hash, region).ok().into()
 }
 
@@ -80,7 +86,11 @@ pub extern "C" fn arc_get_file_info(arc: &ArcFile, hash: Hash40) -> Option<&File
 
 /// Get file information such as offset and decompressed size for the given [Hash40] for a specified region.
 #[no_mangle]
-pub extern "C" fn arc_get_file_info_regional(arc: &ArcFile, hash: Hash40, region: Region) -> Option<&FileData> {
+pub extern "C" fn arc_get_file_info_regional(
+    arc: &ArcFile,
+    hash: Hash40,
+    region: Region,
+) -> Option<&FileData> {
     arc.get_file_data_from_hash(hash, region).ok()
 }
 
@@ -92,7 +102,11 @@ pub extern "C" fn arc_get_shared_files(arc: &ArcFile, hash: Hash40) -> FfiVec<Ha
 
 /// Get an owned list of shared files for a file, given its hash for a specified region
 #[no_mangle]
-pub extern "C" fn arc_get_shared_files_regional(arc: &ArcFile, hash: Hash40, region: Region) -> FfiVec<Hash40> {
+pub extern "C" fn arc_get_shared_files_regional(
+    arc: &ArcFile,
+    hash: Hash40,
+    region: Region,
+) -> FfiVec<Hash40> {
     arc.get_shared_files(hash, region).ok().into()
 }
 
@@ -104,7 +118,11 @@ pub unsafe extern "C" fn arc_free_shared_file_list(ffi: FfiVec<Hash40>) {
 
 /// Extract a file to a given null-terminated path for the given [Hash40]
 #[no_mangle]
-pub unsafe extern "C" fn arc_extract_file(arc: &ArcFile, hash: Hash40, path: *const i8) -> ExtractResult {
+pub unsafe extern "C" fn arc_extract_file(
+    arc: &ArcFile,
+    hash: Hash40,
+    path: *const i8,
+) -> ExtractResult {
     match arc.get_file_contents(hash, Region::UsEnglish) {
         Ok(contents) => {
             let path = std::ffi::CStr::from_ptr(path);
@@ -121,7 +139,12 @@ pub unsafe extern "C" fn arc_extract_file(arc: &ArcFile, hash: Hash40, path: *co
 
 /// Extract a file to a given null-terminated path for the given [Hash40] for a given region
 #[no_mangle]
-pub unsafe extern "C" fn arc_extract_file_regional(arc: &ArcFile, hash: Hash40, path: *const i8, region: Region) -> ExtractResult {
+pub unsafe extern "C" fn arc_extract_file_regional(
+    arc: &ArcFile,
+    hash: Hash40,
+    path: *const i8,
+    region: Region,
+) -> ExtractResult {
     match arc.get_file_contents(hash, region) {
         Ok(contents) => {
             let path = std::ffi::CStr::from_ptr(path);
@@ -136,7 +159,7 @@ pub unsafe extern "C" fn arc_extract_file_regional(arc: &ArcFile, hash: Hash40, 
     }
 }
 
-/// Load hash labels from a given path. 
+/// Load hash labels from a given path.
 /// Returns `true` on success.
 #[no_mangle]
 pub unsafe extern "C" fn arc_load_labels(path: *const i8) -> bool {
@@ -154,14 +177,14 @@ pub unsafe extern "C" fn arc_hash40_to_str(hash: Hash40) -> *mut i8 {
     hash.label(&labels)
         .map(|string| std::ffi::CString::new(string).unwrap().into_raw())
         .unwrap_or(std::ptr::null_mut())
-} 
+}
 
 /// Hashes a given string and returns the result as a [Hash40].
 #[no_mangle]
 pub unsafe extern "C" fn arc_str_to_hash40(string: *const i8) -> Hash40 {
     let string = std::ffi::CStr::from_ptr(string);
     hash40::hash40_from_bytes(string.to_bytes())
-} 
+}
 
 /// Frees the memory allocated by [arc_hash40_to_str].
 #[no_mangle]
@@ -170,12 +193,19 @@ pub unsafe extern "C" fn arc_free_str(string: *mut i8) {
 }
 
 #[no_mangle]
-pub extern "C" fn arc_get_file_metadata(arc: &ArcFile, hash: Hash40) -> crate::lookups::FileMetadata {
+pub extern "C" fn arc_get_file_metadata(
+    arc: &ArcFile,
+    hash: Hash40,
+) -> crate::lookups::FileMetadata {
     arc.get_file_metadata(hash, Region::UsEnglish).unwrap()
 }
 
 #[no_mangle]
-pub extern "C" fn arc_get_file_metadata_regional(arc: &ArcFile, hash: Hash40, region: Region) -> crate::lookups::FileMetadata {
+pub extern "C" fn arc_get_file_metadata_regional(
+    arc: &ArcFile,
+    hash: Hash40,
+    region: Region,
+) -> crate::lookups::FileMetadata {
     arc.get_file_metadata(hash, region).unwrap()
 }
 
@@ -194,7 +224,7 @@ pub extern "C" fn arc_generate_search_cache(arc: &ArcFile) -> Box<crate::search:
 /// Searches for a given path. Requires labels to be loaded and a search cache be generated
 #[cfg(feature = "search")]
 #[no_mangle]
-pub unsafe fn arc_search_files(
+pub unsafe extern "C" fn arc_search_files(
     cache: &crate::search::SearchCache,
     search_term: *const i8,
     max_files: usize,
@@ -204,7 +234,7 @@ pub unsafe fn arc_search_files(
     let labels = crate::hash_labels::GLOBAL_LABELS.read();
 
     Some(cache.search(&term, &labels, max_files)).into()
-} 
+}
 
 #[repr(u8)]
 pub enum ExtractResult {
@@ -233,7 +263,10 @@ impl<T: Sized> From<Option<Vec<T>>> for FfiVec<T> {
                 Self { ptr, size }
             }
 
-            None => Self { ptr: std::ptr::null_mut(), size: 0 }
+            None => Self {
+                ptr: std::ptr::null_mut(),
+                size: 0,
+            },
         }
     }
 }
@@ -260,12 +293,12 @@ impl From<Option<&[FileNode]>> for DirListing {
         match list {
             Some(list) => Self {
                 pointer: list.as_ptr(),
-                size: list.len()
+                size: list.len(),
             },
             None => Self {
                 pointer: std::ptr::null(),
-                size: 0
-            }
+                size: 0,
+            },
         }
     }
 }
