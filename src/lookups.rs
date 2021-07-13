@@ -603,3 +603,123 @@ mod tests {
         dir_info_print_filepaths(&arc, &dir_info, &labels); 
     }
 }
+
+// #[derive(Copy, Clone)]
+// enum WalkdirDirectoryType<'a> {
+//     FileGroup(&'a DirectoryOffset),
+//     Directory(&'a DirInfo)
+// }
+
+// pub struct WalkdirIter<'a> {
+//     arc: &'a LoadedArc,
+//     current: WalkdirDirectoryType<'a>,
+//     index: usize,
+//     child_index: usize,
+//     redirect: Option<WalkdirIter<'a, T>>,
+//     child: Option<WalkdirIter<'a, T>>
+// }
+
+// impl<'a> WalkdirIter<'a> {
+//     fn get_file_count(&self) -> usize {
+//         match self.current {
+//             WalkdirDirectoryType::Directory(directory) => directory.file_count as usize,
+//             WalkdirDirectoryType::FileGroup(group) => group.file_count as usize
+//         }
+//     }
+
+//     fn setup_redirect(&mut self) {
+//         if self.redirect.is_none() {
+//             if let WalkdirDirectoryType::Directory(directory) = self.current {
+//                 if directory.flags.redirected() {
+//                     let file_group = &arc.get_folder_offsets()[directory.path.index() as usize];
+//                     if file_group.directory_index == 0xFF_FFFF { return; }
+//                     if directory.flags.is_symlink() {
+//                         self.redirect = Self {
+//                             arc: self.arc,
+//                             current: WalkdirDirectoryType::Directory(&arc.get_dir_infos()[file_group.directory_index as usize]),
+//                             index: 0,
+//                             child_index: 0,
+//                             redirect: None,
+//                             child: None
+//                         };
+//                     } else {
+//                         self.redirect = Self {
+//                             arc: self.arc,
+//                             current: WalkdirDirectoryType::FileGroup(&arc.get_folder_offsets()[file_group.directory_index as usize]),
+//                             index: 0,
+//                             child_index: 0,
+//                             redirect: None,
+//                             child: None
+//                         };
+//                     }
+//                 }
+//             }
+//         }
+//     }
+
+//     fn setup_children(&mut self) {
+//         if let WalkdirDirectoryType::Directory(directory) = self.current {
+//             if self.child_index < directory.child_dir_count {
+                
+//             }
+//         }
+//     }
+
+//     pub fn new(arc: &'a LoadedArc, index: u32) -> Self {
+//         Self {
+//             arc,
+//             current: WalkdirDirectoryType::Directory(&arc.get_dir_infos()[index as usize]),
+//             index: 0,
+//             child_index: 0,
+//             redirect: None,
+//             child: None
+//         }
+//     }
+
+//     pub fn new_hash(arc: &'a LoadedArc, hash: Hash40) -> Self {
+//         Self {
+//             arc,
+//             current: WalkdirDirectoryType::Directory(arc.get_dir_info_from_hash(hash).unwrap()),
+//             index: 0,
+//             child_index: 0,
+//             redirect: None,
+//             child: None
+//         }
+//     }
+// }
+
+// impl<'a> Iterator for WalkdirIter<'a> {
+//     type Output = WalkdirEntry<'a>;
+
+//     fn next(&mut self) -> Option<Self::Output> {
+//         if self.index < self.get_file_count() {
+//             self.index += 1;
+//             Some(WalkdirEntry {
+//                 arc: self.arc,
+//                 parent: self.current,
+//                 index: index - 1
+//             })
+//         } else {
+            
+//         }
+//     }
+// }
+
+// pub struct WalkdirEntry<'a> {
+//     arc: &'a T,
+//     parent: WalkdirDirectoryType<'a>,
+//     index: usize
+// }
+
+// impl<'a> WalkdirEntry<'a> {
+//     pub fn parent(&self) -> WalkdirDirectoryType<'a> {
+//         self.parent
+//     }
+
+//     pub fn get(&self) -> &'a FileInfo {
+//         let range = match self.parent {
+//             WalkdirDirectoryType::FileGroup(group) => group.range(),
+//             WalkdirDirectoryType::Directory(directory) => directory.file_info_range()
+//         };
+//     }
+// }
