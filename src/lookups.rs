@@ -322,12 +322,12 @@ pub trait ArcLookup {
     fn get_shared_data_index(&self) -> u32 {
         let dirs = self.get_dir_infos();
         let mut max = 0;
+        let folders = self.get_folder_offsets();
         for dir in dirs.iter() {
             if dir.flags.redirected() && !dir.flags.is_symlink() {
-                let folders = self.get_folder_offsets();
                 let data_folder = &folders[dir.path.index() as usize];
-                if data_folder.directory_index != 0xFF_FFFF && max < data_folder.directory_index {
-                    max = data_folder.directory_index;
+                if max < (data_folder.file_start_index + data_folder.file_count) {
+                    max = data_folder.file_start_index + data_folder.file_count;
                 }
             }
         }
