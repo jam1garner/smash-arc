@@ -203,7 +203,7 @@ pub struct FileInfoIndex {
 }
 
 /// Also known as MassLoadingGroup
-#[repr(C)]
+#[cfg_attr(feature = "smash-runtime", repr(packed))]
 #[derive(BinRead, Debug, Clone, Copy)]
 pub struct DirInfo {
     pub path: HashToIndex,
@@ -284,14 +284,22 @@ pub struct FileInfoFlags {
     pub unused4: B10,
 }
 
-/// file_info_index_and_flag = ((current_info_idx & 0xFFFFFF)) | (original_info_to_data.file_info_index_and_flag & 0xFF) << 24;
 #[repr(C)]
 #[derive(BinRead, Debug, Clone, Copy)]
 pub struct FileInfoToFileData {
     pub folder_offset_index: u32,
     pub file_data_index: FileDataIdx,
-    pub file_info_index_and_flag: u32,
+    pub file_info_index_and_load_type: FileInfoToFileDataBitfield,
 }
+
+#[bitfield]
+#[derive(BinRead, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[br(map = Self::from_bytes)]
+pub struct FileInfoToFileDataBitfield {
+    pub file_info_idx: B24,
+    pub load_type: u8,
+}
+
 #[repr(C)]
 #[derive(BinRead, Debug, Clone, Copy)]
 pub struct FileData {
