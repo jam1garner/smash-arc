@@ -197,7 +197,23 @@ pub extern "C" fn arc_get_file_metadata(
     arc: &ArcFile,
     hash: Hash40,
 ) -> crate::lookups::FileMetadata {
-    arc.get_file_metadata(hash, Region::UsEnglish).unwrap()
+    arc.get_file_metadata(hash, Region::UsEnglish)
+        .unwrap_or(crate::lookups::FileMetadata {
+            path_hash: hash,
+            ext_hash: Hash40(0),
+            parent_hash: Hash40(0),
+            file_name_hash: Hash40(0),
+            offset: 0,
+            comp_size: 0,
+            decomp_size: 0,
+            is_stream: false,
+            is_shared: false,
+            is_redirect: false,
+            is_regional: false,
+            is_localized: false,
+            is_compressed: false,
+            uses_zstd: false,
+        })
 }
 
 #[no_mangle]
@@ -206,7 +222,23 @@ pub extern "C" fn arc_get_file_metadata_regional(
     hash: Hash40,
     region: Region,
 ) -> crate::lookups::FileMetadata {
-    arc.get_file_metadata(hash, region).unwrap()
+    arc.get_file_metadata(hash, region)
+        .unwrap_or(crate::lookups::FileMetadata {
+            path_hash: hash,
+            ext_hash: Hash40(0),
+            parent_hash: Hash40(0),
+            file_name_hash: Hash40(0),
+            offset: 0,
+            comp_size: 0,
+            decomp_size: 0,
+            is_stream: false,
+            is_shared: false,
+            is_redirect: false,
+            is_regional: false,
+            is_localized: false,
+            is_compressed: false,
+            uses_zstd: false,
+        })
 }
 
 #[no_mangle]
