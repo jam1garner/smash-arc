@@ -4,8 +4,8 @@ use std::{
     io::BufReader,
 };
 
-use crate::loaded_arc::LoadedArc;
-use crate::ArcLookup;
+use crate::loaded_arc::{LoadedArc, LoadedSearchSection};
+use crate::{ArcLookup, SearchLookup};
 use crate::SeekRead;
 use crate::filesystem::*;
 
@@ -183,5 +183,74 @@ impl ArcLookup for LoadedArc {
 
     fn get_file_reader<'a>(&'a self) -> Box<dyn SeekRead + 'a> {
         Box::new(BufReader::new(File::open("rom:/data.arc").unwrap()))
+    }
+}
+
+impl SearchLookup for LoadedArc {
+    fn get_folder_path_to_index(&self) -> &[HashToIndex] {
+        unsafe {
+            (*self.loaded_file_system_search).get_folder_path_to_index()
+        }
+    }
+
+    fn get_folder_path_list(&self) -> &[FolderPathListEntry] {
+        unsafe {
+            (*self.loaded_file_system_search).get_folder_path_list()
+        }
+    }
+
+    fn get_path_to_index(&self) -> &[HashToIndex] {
+        unsafe {
+            (*self.loaded_file_system_search).get_path_to_index()
+        }
+    }
+
+    fn get_path_list_indices(&self) -> &[u32] {
+        unsafe {
+            (*self.loaded_file_system_search).get_path_list_indices()
+        }
+    }
+
+    fn get_path_list(&self) -> &[PathListEntry] {
+        unsafe {
+            (*self.loaded_file_system_search).get_path_list()
+        }
+    }
+}
+
+impl SearchLookup for LoadedSearchSection {
+    fn get_folder_path_to_index(&self) -> &[HashToIndex] {
+        unsafe {
+            let table_size = (*self.body).folder_path_count;
+            std::slice::from_raw_parts(self.folder_path_index, table_size as usize)
+        }
+    }
+
+    fn get_folder_path_list(&self) -> &[FolderPathListEntry] {
+        unsafe {
+            let table_size = (*self.body).folder_path_count;
+            std::slice::from_raw_parts(self.folder_path_list, table_size as usize)
+        }
+    }
+
+    fn get_path_to_index(&self) -> &[HashToIndex] {
+        unsafe {
+            let table_size = (*self.body).path_indices_count;
+            std::slice::from_raw_parts(self.path_index, table_size as usize)
+        }
+    }
+
+    fn get_path_list_indices(&self) -> &[u32] {
+        unsafe {
+            let table_size = (*self.body).path_indices_count;
+            std::slice::from_raw_parts(self.path_list_indices, table_size as usize)
+        }
+    }
+
+    fn get_path_list(&self) -> &[PathListEntry] {
+        unsafe {
+            let table_size = (*self.body).path_count;
+            std::slice::from_raw_parts(self.path_list, table_size as usize)
+        }
     }
 }

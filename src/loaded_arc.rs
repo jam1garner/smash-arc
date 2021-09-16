@@ -78,14 +78,19 @@ pub struct SearchSectionHeader {
 
 #[repr(C)]
 pub struct SearchSectionBody {
-    pub file_info_count: u32,
-    pub file_info_indices_count: u32,
-    pub path_group_count: u32,
+    pub folder_path_count: u32,
+    pub path_indices_count: u32,
+    pub path_count: u32,
 }
 
 #[repr(C)]
 pub struct LoadedSearchSection {
     pub search_header: *const SearchSectionHeader,
     pub body: *const SearchSectionBody,
+    pub folder_path_index: *const HashToIndex,
+    pub folder_path_list: *const FolderPathListEntry,
+    pub path_index: *const HashToIndex,
+    pub path_list_indices: *const u32,
+    pub path_list: *const PathListEntry 
     // ...
 }

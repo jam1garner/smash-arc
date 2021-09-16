@@ -319,6 +319,22 @@ pub struct FileDataFlags {
     pub unk: B30,
 }
 
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct SearchListEntry {
+    pub path: HashToIndex,
+    pub parent: HashToIndex,
+    pub file_name: HashToIndex,
+    pub ext: HashToIndex
+}
+
+#[repr(transparent)]
+#[derive(Debug, Copy, Clone)]
+pub struct PathListEntry(pub SearchListEntry);
+
+#[repr(transparent)]
+#[derive(Debug, Copy, Clone)]
+pub struct FolderPathListEntry(pub SearchListEntry);
 
 macro_rules! impl_fs_index {
     ($to_index:ty, $index_with:ty) => {
@@ -342,3 +358,88 @@ impl_fs_index!(FileInfoIndex, FileInfoIndiceIdx);
 impl_fs_index!(FileInfo, FileInfoIdx);
 impl_fs_index!(FileInfoToFileData, InfoToDataIdx);
 impl_fs_index!(FileData, FileDataIdx);
+
+use std::ops::{Deref, DerefMut};
+
+impl Deref for PathListEntry {
+    type Target = SearchListEntry;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl DerefMut for PathListEntry {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
+impl Deref for FolderPathListEntry {
+    type Target = SearchListEntry;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl DerefMut for FolderPathListEntry {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
+impl PathListEntry {
+    pub fn is_directory(&self) -> bool {
+        self.parent.index() & 0x40_0000 != 0
+    }
+
+    pub fn as_folder_entry(&self) -> FolderPathListEntry {
+        let mut file_path = self.path;
+        file_path.set_index(0xFF_FFFF);
+        let mut parent = self.parent;
+        parent.set_index(0x40_0000);
+        let mut ext = self.ext;
+        ext.set_hash(0xFFFF_FFFF);
+        ext.set_length(0x00);
+        ext.set_index(0x00);
+
+        FolderPathListEntry(SearchListEntry {
+            path: file_path,
+            parent,
+            ext,
+            file_name: self.file_name
+        })
+    }
+}
+
+impl FolderPathListEntry {
+    pub fn get_child_count(&self) -> usize {
+        self.parent.index() as usize
+    }
+
+    pub fn get_first_child_index(&self) -> usize {
+        (self.ext.hash40().as_u64() & 0xFF_FFFF) as usize
+    }
+
+    pub fn as_path_entry(&self) -> PathListEntry {
+        let mut file_path = self.path;
+        file_path.set_index(0xFF_FFFF);
+        let mut parent = self.parent;
+        parent.set_index(0x40_0000);
+        let mut ext = self.ext;
+        ext.set_hash(0x0);
+        ext.set_length(0x0);
+        ext.set_index(0x0);
+        PathListEntry(SearchListEntry {
+            path: file_path,
+            parent,
+            ext,
+            file_name: self.file_name
+        })
+    }
+
+    pub fn set_first_child_index(&mut self, idx: u32) {
+        self.ext.set_hash(idx & 0xFF_FFFF)
+    }
+}
