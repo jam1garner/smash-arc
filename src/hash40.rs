@@ -103,7 +103,7 @@ pub mod serde {
 
     use crate::Hash40;
 
-    #[derive(Clone, Copy, PartialEq, Eq, Ord, PartialOrd, Hash)]
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, Ord, PartialOrd, Hash)]
     pub struct Hash40String(pub Hash40);
 
     struct Hash40Visitor;
