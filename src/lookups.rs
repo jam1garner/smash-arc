@@ -231,7 +231,7 @@ pub trait ArcLookup {
     }
 
     fn get_file_in_folder(&self, file_info: &FileInfo, region: Region) -> FileInfoToFileData {
-        if file_info.flags.is_localized() {
+        if file_info.flags.is_regional() {
             self.get_file_info_to_datas()[usize::from(file_info.info_to_data_index) + (region as usize)]
         } else {
             self.get_file_info_to_datas()[file_info.info_to_data_index]
@@ -239,7 +239,7 @@ pub trait ArcLookup {
     }
 
     fn get_file_in_folder_mut(&mut self, file_info: &FileInfo, region: Region) -> &mut FileInfoToFileData {
-        if file_info.flags.is_localized() {
+        if file_info.flags.is_regional() {
             &mut self.get_file_info_to_datas_mut()[usize::from(file_info.info_to_data_index) + (region as usize)]
         } else {
             &mut self.get_file_info_to_datas_mut()[file_info.info_to_data_index]
