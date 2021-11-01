@@ -27,14 +27,17 @@ network-reader-adapter = { version = "0.1", optional = true }
 
 fuzzy-matcher = { version = "0.3", optional = true }
 rayon = { version = "1.5", optional = true }
+serde = { version = "1.0.130", features = ["derive"], optional = true }
+bincode = { version = "1.3.3", optional = true }
 
 [features]
-default = ["dir-listing", "network"]
+default = ["dir-listing", "network", "serialize"]
 network = ["network-reader-adapter"]
 dir-listing = ["global-hashes"]
 global-hashes = ["lazy_static", "parking_lot"]
 search = ["fuzzy-matcher", "rayon"]
 smash-runtime = ["crc32fast/nightly"]
+serialize = ["serde"]
 
 # Recommended for use on platforms it builds for
 libzstd = ["zstd"]
