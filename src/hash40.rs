@@ -167,10 +167,8 @@ pub mod serde {
         where
                 E: Error, {
             if v.starts_with("0x") {
-                v
-                    .trim_start_matches("0x")
-                    .parse::<u64>()
-                    .map_or_else(|_| Ok(Hash40::from(v)), |val| Ok(Hash40(val)))
+                u64::parse_str_radix(v.trim_start_matches("0x"), 16)
+                    .map_or_else(|_| Hash40::from(v), |val| Hash40(val))
             } else {
                 Ok(Hash40::from(v))
             }
