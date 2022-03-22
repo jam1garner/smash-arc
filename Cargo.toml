@@ -31,7 +31,7 @@ serde = { version = "1.0.130", features = ["derive"], optional = true }
 bincode = { version = "1.3.3", optional = true }
 
 [features]
-default = ["dir-listing", "network", "serialize"]
+default = ["dir-listing", "network"]
 network = ["network-reader-adapter"]
 dir-listing = ["global-hashes"]
 global-hashes = ["lazy_static", "parking_lot"]
