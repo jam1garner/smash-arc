@@ -61,11 +61,13 @@ pub use loaded_arc::*;
 
 pub use arc_file::*;
 pub use filesystem::*;
-pub use lookups::{ArcLookup, LookupError};
+pub use lookups::{ArcLookup, SearchLookup, LookupError};
 pub use hash40::{hash40, Hash40};
 pub use hash_labels::{GLOBAL_LABELS, HashLabels};
 pub use table_indices::*;
 
+#[cfg(feature = "serialize")]
+pub use hash40::serde;
 /// A node in the file tree, the hash of which can be used to handle lookups.
 #[repr(C, u64)]
 #[derive(Debug, PartialEq, Ord, PartialOrd, Eq)]

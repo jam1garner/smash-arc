@@ -390,6 +390,87 @@ pub trait ArcLookup {
     }
 }
 
+pub trait SearchLookup {
+    fn get_folder_path_to_index(&self) -> &[HashToIndex];
+    fn get_folder_path_list(&self) -> &[FolderPathListEntry];
+    fn get_path_to_index(&self) -> &[HashToIndex];
+    fn get_path_list_indices(&self) -> &[u32];
+    fn get_path_list(&self) -> &[PathListEntry];
+
+    fn get_folder_path_index_from_hash(&self, hash: impl Into<Hash40>) -> Result<&HashToIndex, LookupError> {
+        let folder_path_to_index = self.get_folder_path_to_index();
+        match folder_path_to_index.binary_search_by_key(&hash.into(), |h| h.hash40()) {
+            Ok(idx) => Ok(&folder_path_to_index[idx]),
+            Err(_) => Err(LookupError::Missing)
+        }
+    }
+
+    fn get_folder_path_entry_from_hash(&self, hash: impl Into<Hash40>) -> Result<&FolderPathListEntry, LookupError> {
+        let index = self.get_folder_path_index_from_hash(hash)?;
+        if index.index() != 0xFF_FFFF {
+            Ok(&self.get_folder_path_list()[index.index() as usize])
+        } else {
+            Err(LookupError::Missing)
+        }
+    }
+
+    fn get_path_index_from_hash(&self, hash: impl Into<Hash40>) -> Result<&HashToIndex, LookupError> {
+        let path_to_index = self.get_path_to_index();
+        match path_to_index.binary_search_by_key(&hash.into(), |h| h.hash40()) {
+            Ok(idx) => Ok(&path_to_index[idx]),
+            Err(_) => Err(LookupError::Missing)
+        }
+    }
+
+    fn get_path_list_index_from_hash(&self, hash: impl Into<Hash40>) -> Result<u32, LookupError> {
+        let index = self.get_path_index_from_hash(hash)?;
+        if index.index() != 0xFF_FFFF {
+            Ok(self.get_path_list_indices()[index.index() as usize])
+        } else {
+            Err(LookupError::Missing)
+        }
+    }
+
+    fn get_path_list_entry_from_hash(&self, hash: impl Into<Hash40>) -> Result<&PathListEntry, LookupError> {
+        let index = self.get_path_list_index_from_hash(hash)?;
+        if index != 0xFF_FFFF {
+            Ok(&self.get_path_list()[index as usize])
+        } else {
+            Err(LookupError::Missing)
+        }
+    }
+
+    fn get_first_child_in_folder(&self, hash: impl Into<Hash40>) -> Result<&PathListEntry, LookupError> {
+        let folder_path = self.get_folder_path_entry_from_hash(hash)?;
+        let index_idx = folder_path.get_first_child_index();
+
+        if index_idx == 0xFF_FFFF {
+            return Err(LookupError::Missing);
+        }
+
+        let path_entry_index = self.get_path_list_indices()[index_idx];
+        if path_entry_index != 0xFF_FFFF {
+            Ok(&self.get_path_list()[path_entry_index as usize])
+        } else {
+            Err(LookupError::Missing)
+        }
+    }
+
+    fn get_next_child_in_folder(&self, current_child: &PathListEntry) -> Result<&PathListEntry, LookupError> {
+        let index_idx = current_child.path.index() as usize;
+        if index_idx == 0xFF_FFFF {
+            return Err(LookupError::Missing);
+        }
+
+        let path_entry_index = self.get_path_list_indices()[index_idx];
+        if path_entry_index != 0xFF_FFFF {
+            Ok(&self.get_path_list()[path_entry_index as usize])
+        } else {
+            Err(LookupError::Missing)
+        }
+    }
+}
+
 #[repr(C)]
 #[derive(Debug)]
 pub struct FileMetadata {
