@@ -1,16 +1,10 @@
-use std::{
-    fs::File,
-    io::BufReader
-};
+use std::{fs::File, io::BufReader};
 
-use binread::{
-    BinResult,
-    BinReaderExt
-};
+use binrw::{BinReaderExt, BinResult};
 
+pub use crate::filesystem::*;
 use crate::ArcFile;
 use crate::SeekRead;
-pub use crate::filesystem::*;
 
 #[repr(C)]
 #[derive(Debug)]
@@ -49,7 +43,7 @@ pub struct LoadedArc {
     pub extra_entries: u64,
     pub extra_folder_offsets: *mut DirectoryOffset,
     // CppVector
-    pub extra_entry_vector: [u64;3],
+    pub extra_entry_vector: [u64; 3],
     pub version: u32,
     pub extra_count: u32,
     pub loaded_file_system_search: *const LoadedSearchSection,
@@ -91,6 +85,6 @@ pub struct LoadedSearchSection {
     pub folder_path_list: *const FolderPathListEntry,
     pub path_index: *const HashToIndex,
     pub path_list_indices: *const u32,
-    pub path_list: *const PathListEntry 
-    // ...
+    pub path_list: *const PathListEntry, // ...
 }
+

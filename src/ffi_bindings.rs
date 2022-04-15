@@ -189,7 +189,8 @@ pub unsafe extern "C" fn arc_str_to_hash40(string: *const i8) -> Hash40 {
 /// Frees the memory allocated by [arc_hash40_to_str].
 #[no_mangle]
 pub unsafe extern "C" fn arc_free_str(string: *mut i8) {
-    std::ffi::CString::from_raw(string);
+    // this is definitely technically maybe UB depending on the allocator, oops?
+    drop(std::ffi::CString::from_raw(string));
 }
 
 #[no_mangle]
