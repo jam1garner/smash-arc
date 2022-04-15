@@ -1,23 +1,17 @@
 use std::{
+    collections::{HashMap, HashSet},
     fs::File,
+    io::{BufReader, Seek, SeekFrom},
+    net::ToSocketAddrs,
     path::Path,
     sync::Mutex,
-    net::ToSocketAddrs,
-    io::{Seek, SeekFrom, BufReader},
-    collections::{HashMap, HashSet},
 };
 
-use binread::{
-    BinRead,
-    FilePtr64,
-    BinResult,
-    BinReaderExt,
-    io::Cursor,
-};
+use binrw::{io::Cursor, BinRead, BinReaderExt, BinResult, FilePtr64};
 
-use crate::{Hash40, FileNode, FileSystem, CompressedFileSystem};
-use crate::hash_labels::HashLabels;
 use crate::filesystem::HashToIndex;
+use crate::hash_labels::HashLabels;
+use crate::{CompressedFileSystem, FileNode, FileSystem, Hash40};
 
 pub trait SeekRead: std::io::Read + std::io::Seek {}
 impl<R: std::io::Read + std::io::Seek> SeekRead for R {}
@@ -64,12 +58,22 @@ fn parents_of_dir(dir: Hash40, labels: &mut HashLabels) -> Option<Vec<(Hash40, F
 }
 
 #[cfg(feature = "dir-listing")]
-fn dir_listing_flat<'a>(fs: &'a FileSystem, labels: &'a mut HashLabels) -> impl Iterator<Item = (Hash40, FileNode)> + 'a {
-    let dirs: HashSet<_> = fs.file_paths.iter().map(|path| path.parent.hash40()).collect();
+fn dir_listing_flat<'a>(
+    fs: &'a FileSystem,
+    labels: &'a mut HashLabels,
+) -> impl Iterator<Item = (Hash40, FileNode)> + 'a {
+    let dirs: HashSet<_> = fs
+        .file_paths
+        .iter()
+        .map(|path| path.parent.hash40())
+        .collect();
 
     let mut stream_dirs = Vec::new();
     for path_hash in fs.stream_hash_to_entries.iter().map(HashToIndex::hash40) {
-        if let Some(label) = path_hash.label(&labels).and_then(|label| label.rfind('/').map(|pos| label[..pos].to_owned())) {
+        if let Some(label) = path_hash
+            .label(&labels)
+            .and_then(|label| label.rfind('/').map(|pos| label[..pos].to_owned()))
+        {
             let mut label = &label[..];
             let mut last_hash = crate::hash40::hash40(label);
             labels.add_label(label);
@@ -88,23 +92,36 @@ fn dir_listing_flat<'a>(fs: &'a FileSystem, labels: &'a mut HashLabels) -> impl 
         }
     }
 
-    let stream_paths: Vec<(Hash40, &str)> = fs.stream_hash_to_entries.iter().filter_map(|entry| entry.hash40().label(labels).map(|path| (entry.hash40(), path))).collect();
-    let stream_files: Vec<(Hash40, FileNode)> = stream_paths.iter().flat_map(|(path_hash, path)| {
-        path.rfind('/')
-            .map(|pos| {
+    let stream_paths: Vec<(Hash40, &str)> = fs
+        .stream_hash_to_entries
+        .iter()
+        .filter_map(|entry| {
+            entry
+                .hash40()
+                .label(labels)
+                .map(|path| (entry.hash40(), path))
+        })
+        .collect();
+    let stream_files: Vec<(Hash40, FileNode)> = stream_paths
+        .iter()
+        .flat_map(|(path_hash, path)| {
+            path.rfind('/').map(|pos| {
                 let dir = crate::hash40::hash40(&path[..pos]);
 
                 (dir, FileNode::File(*path_hash))
             })
-    }).collect();
+        })
+        .collect();
 
     // Generate parents for directories
-    let dirs = dirs.into_iter()
+    let dirs = dirs
+        .into_iter()
         .filter_map(move |dir| parents_of_dir(dir, labels).map(|x| x.into_iter()))
         .flatten();
 
     // Generate parents for files
-    fs.file_paths.iter()
+    fs.file_paths
+        .iter()
         .map(|path| (path.parent.hash40(), FileNode::File(path.path.hash40())))
         .chain(dirs)
         .chain(stream_files.into_iter())
@@ -120,7 +137,7 @@ fn generate_dir_listing(fs: &FileSystem) -> HashMap<Hash40, Vec<FileNode>> {
         let listing = dirs.entry(parent).or_insert_with(Vec::new);
         match listing.binary_search(&child) {
             Ok(_) => (),
-            Err(insert_point) => listing.insert(insert_point, child)
+            Err(insert_point) => listing.insert(insert_point, child),
         }
     }
 
@@ -164,10 +181,18 @@ mod tests {
             (0..depth).for_each(|_| print!("    "));
             match file {
                 FileNode::File(file) => {
-                    println!("L {}", file.global_label().unwrap_or_else(|| format!("{:#x}", file.as_u64())));
+                    println!(
+                        "L {}",
+                        file.global_label()
+                            .unwrap_or_else(|| format!("{:#x}", file.as_u64()))
+                    );
                 }
                 FileNode::Dir(dir) => {
-                    println!("L {}", dir.global_label().unwrap_or_else(|| format!("{:#x}", dir.as_u64())));
+                    println!(
+                        "L {}",
+                        dir.global_label()
+                            .unwrap_or_else(|| format!("{:#x}", dir.as_u64()))
+                    );
                     //print_tree_hash(arc, *dir, depth + 1);
                 }
             }

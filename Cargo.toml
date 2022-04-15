@@ -1,6 +1,6 @@
 [package]
 name = "smash-arc"
-version = "0.3.0"
+version = "0.4.0"
 authors = ["jam1garner <8260240+jam1garner@users.noreply.github.com>"]
 edition = "2018"
 description = "A Rust library for working with Smash Ultimate's data.arc files"
@@ -12,7 +12,7 @@ license = "MIT"
 crate-type = ["lib", "cdylib"]
 
 [dependencies]
-binread = { version = "2" }
+binrw = "0.8.4"
 modular-bitfield = "0.10"
 thiserror = "1"
 crc32fast = "=1.3.1"

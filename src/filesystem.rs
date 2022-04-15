@@ -1,13 +1,7 @@
+use crate::{FileDataIdx, FileInfoIdx, FileInfoIndiceIdx, FilePathIdx, Hash40, InfoToDataIdx};
 use modular_bitfield::prelude::*;
-use crate::{FileDataIdx, FileInfoIdx, FileInfoIndiceIdx, FilePathIdx, InfoToDataIdx, Hash40};
 
-use binread::{
-    BinRead,
-    derive_binread,
-    ReadOptions,
-    io::*,
-    BinResult
-};
+use binrw::{binread, io::*, BinRead, BinResult, ReadOptions};
 
 #[derive(BinRead, Debug, Clone, Copy)]
 #[br(magic = 0x10_u32)]
@@ -23,7 +17,8 @@ impl BinRead for CompressedFileSystem {
     type Args = ();
 
     fn read_options<R>(reader: &mut R, options: &ReadOptions, args: Self::Args) -> BinResult<Self>
-        where R: Read + Seek,
+    where
+        R: Read + Seek,
     {
         let header = CompTableHeader::read_options(reader, options, args)?;
 
@@ -34,14 +29,13 @@ impl BinRead for CompressedFileSystem {
         let compressed = Cursor::new(compressed);
         let mut decompressed = Cursor::new(crate::zstd_backend::decode_all(compressed)?);
 
-        FileSystem::read_options(&mut decompressed, options, ())
-            .map(CompressedFileSystem)
+        FileSystem::read_options(&mut decompressed, options, ()).map(CompressedFileSystem)
     }
 }
 
 /// The filesystem itself. Includes all the linking between paths, file data, directories, and
 /// mass-loading groups.
-#[derive_binread]
+#[binread]
 #[derive(Debug)]
 pub struct FileSystem {
     pub fs_header: FileSystemHeader,
@@ -57,16 +51,16 @@ pub struct FileSystem {
 
     #[br(count = stream_header.stream_hash_count)]
     pub stream_entries: Vec<StreamEntry>,
-    
+
     #[br(count = stream_header.stream_file_index_count)]
     pub stream_file_indices: Vec<u32>,
-    
+
     #[br(count = stream_header.stream_offset_entry_count)]
     pub stream_datas: Vec<StreamData>,
 
     #[br(temp)]
     pub hash_index_group_count: u32,
-    
+
     #[br(temp)]
     pub bucket_count: u32,
 
@@ -81,13 +75,13 @@ pub struct FileSystem {
 
     #[br(count = fs_header.file_info_index_count)]
     pub file_info_indices: Vec<FileInfoIndex>,
-    
+
     #[br(count = fs_header.folder_count)]
     pub dir_hash_to_info_index: Vec<HashToIndex>,
 
     #[br(count = fs_header.folder_count)]
     pub dir_infos: Vec<DirInfo>,
-    
+
     #[br(count = fs_header.folder_offset_count_1 + fs_header.folder_offset_count_2 + fs_header.extra_folder)]
     pub folder_offsets: Vec<DirectoryOffset>,
 
@@ -128,7 +122,7 @@ pub struct FileSystemHeader {
     pub regional_count_1: u8,
     pub regional_count_2: u8,
     pub padding2: u16,
-    
+
     pub version: u32,
     pub extra_folder: u32,
     pub extra_count: u32,
@@ -325,7 +319,7 @@ pub struct SearchListEntry {
     pub path: HashToIndex,
     pub parent: HashToIndex,
     pub file_name: HashToIndex,
-    pub ext: HashToIndex
+    pub ext: HashToIndex,
 }
 
 #[repr(transparent)]
@@ -350,7 +344,7 @@ macro_rules! impl_fs_index {
                 self.get_mut(usize::from(index)).unwrap()
             }
         }
-    }
+    };
 }
 
 impl_fs_index!(FilePath, FilePathIdx);
@@ -408,7 +402,7 @@ impl PathListEntry {
             path: file_path,
             parent,
             ext,
-            file_name: self.file_name
+            file_name: self.file_name,
         })
     }
 }
@@ -435,7 +429,7 @@ impl FolderPathListEntry {
             path: file_path,
             parent,
             ext,
-            file_name: self.file_name
+            file_name: self.file_name,
         })
     }
 

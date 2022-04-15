@@ -1,6 +1,6 @@
-use binread::BinRead;
+use crate::{HashToIndex, QuickDir, StreamEntry};
+use binrw::BinRead;
 use crc32fast::Hasher;
-use crate::{HashToIndex, StreamEntry, QuickDir};
 
 #[repr(transparent)]
 #[derive(BinRead, Debug, Clone, Copy, PartialEq, Eq, Ord, PartialOrd, Hash)]
@@ -70,16 +70,15 @@ impl HashToIndex {
 
 impl StreamEntry {
     pub fn hash40(&self) -> Hash40 {
-        Hash40((self.hash() as u64) + ((self.name_length() as u64) <<  32))
+        Hash40((self.hash() as u64) + ((self.name_length() as u64) << 32))
     }
 }
 
 impl QuickDir {
     pub fn hash40(&self) -> Hash40 {
-        Hash40((self.hash() as u64) + ((self.name_length() as u64) <<  32))
+        Hash40((self.hash() as u64) + ((self.name_length() as u64) << 32))
     }
 }
-
 
 // Find the hash40 of a given string
 pub fn hash40(string: &str) -> Hash40 {
@@ -99,7 +98,10 @@ fn crc32(bytes: &[u8]) -> u32 {
 
 #[cfg(feature = "serialize")]
 pub mod serde {
-    use serde::{Deserialize, Deserializer, Serialize, Serializer, de::{Error, Unexpected, Visitor}};
+    use serde::{
+        de::{Error, Unexpected, Visitor},
+        Deserialize, Deserializer, Serialize, Serializer,
+    };
 
     use crate::Hash40;
 
@@ -107,7 +109,7 @@ pub mod serde {
     pub struct Hash40String(pub Hash40);
 
     struct Hash40Visitor;
-    
+
     impl<'de> Visitor<'de> for Hash40Visitor {
         type Value = Hash40;
 
@@ -117,55 +119,70 @@ pub mod serde {
 
         fn visit_i8<E>(self, v: i8) -> Result<Self::Value, E>
         where
-                E: Error, {
+            E: Error,
+        {
             self.visit_i32(v as i32)
         }
 
         fn visit_i16<E>(self, v: i16) -> Result<Self::Value, E>
         where
-                E: Error, {
+            E: Error,
+        {
             self.visit_i32(v as i32)
         }
 
         fn visit_i32<E>(self, v: i32) -> Result<Self::Value, E>
         where
-                E: Error, {
-            Err(Error::invalid_type(Unexpected::Signed(v as i64), &Hash40Visitor))
+            E: Error,
+        {
+            Err(Error::invalid_type(
+                Unexpected::Signed(v as i64),
+                &Hash40Visitor,
+            ))
         }
 
         fn visit_u8<E>(self, v: u8) -> Result<Self::Value, E>
         where
-                E: Error, {
+            E: Error,
+        {
             self.visit_u32(v as u32)
         }
-        
+
         fn visit_u16<E>(self, v: u16) -> Result<Self::Value, E>
         where
-                E: Error, {
+            E: Error,
+        {
             self.visit_u32(v as u32)
         }
-        
+
         fn visit_u32<E>(self, v: u32) -> Result<Self::Value, E>
         where
-                E: Error, {
-            Err(Error::invalid_type(Unexpected::Unsigned(v as u64), &Hash40Visitor))
+            E: Error,
+        {
+            Err(Error::invalid_type(
+                Unexpected::Unsigned(v as u64),
+                &Hash40Visitor,
+            ))
         }
 
         fn visit_i64<E>(self, v: i64) -> Result<Self::Value, E>
         where
-                E: Error, {
+            E: Error,
+        {
             self.visit_u64(v as u64)
         }
 
         fn visit_u64<E>(self, v: u64) -> Result<Self::Value, E>
         where
-                E: Error, {
+            E: Error,
+        {
             Ok(Hash40(v))
         }
 
         fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
         where
-                E: Error, {
+            E: Error,
+        {
             if v.starts_with("0x") {
                 Ok(u64::from_str_radix(v.trim_start_matches("0x"), 16)
                     .map_or_else(|_| Hash40::from(v), |val| Hash40(val)))
@@ -178,7 +195,8 @@ pub mod serde {
     impl Serialize for Hash40 {
         fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
         where
-                S: Serializer {
+            S: Serializer,
+        {
             serializer.serialize_u64(self.0)
         }
     }
@@ -186,7 +204,8 @@ pub mod serde {
     impl<'de> Deserialize<'de> for Hash40 {
         fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
         where
-                D: Deserializer<'de> {
+            D: Deserializer<'de>,
+        {
             deserializer.deserialize_u64(Hash40Visitor)
         }
     }
@@ -194,7 +213,8 @@ pub mod serde {
     impl Serialize for Hash40String {
         fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
         where
-                S: Serializer {
+            S: Serializer,
+        {
             Hash40::serialize(&self.0, serializer)
         }
     }
@@ -202,25 +222,34 @@ pub mod serde {
     impl<'de> Deserialize<'de> for Hash40String {
         fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
         where
-                D: Deserializer<'de> {
-            Ok(Self(
-                deserializer.deserialize_any(Hash40Visitor)?
-            ))
+            D: Deserializer<'de>,
+        {
+            Ok(Self(deserializer.deserialize_any(Hash40Visitor)?))
         }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{Hash40, hash40::{hash40_from_bytes, hash40}};
+    use crate::{
+        hash40::{hash40, hash40_from_bytes},
+        Hash40,
+    };
 
     #[test]
     fn hash40_path_string() {
-        assert_eq!(Hash40(0x29954022ed), hash40("fighter/mario/model/body/c00/model.numatb"));
+        assert_eq!(
+            Hash40(0x29954022ed),
+            hash40("fighter/mario/model/body/c00/model.numatb")
+        );
     }
 
     #[test]
     fn hash40_path_bytes() {
-        assert_eq!(Hash40(0x29954022ed), hash40_from_bytes("fighter/mario/model/body/c00/model.numatb".as_bytes()));
+        assert_eq!(
+            Hash40(0x29954022ed),
+            hash40_from_bytes("fighter/mario/model/body/c00/model.numatb".as_bytes())
+        );
     }
 }
+
