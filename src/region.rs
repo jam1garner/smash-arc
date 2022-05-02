@@ -66,23 +66,23 @@ impl FromStr for Region {
     type Err = Infallible;
     fn from_str(x: &str) -> Result<Self, Self::Err> {
         use Region::*;
-        match x {
-            "jp_ja" => Ok(Japanese),
-            "us_en" => Ok(UsEnglish),
-            "us_fr" => Ok(UsFrench),
-            "us_es" => Ok(UsSpanish),
-            "eu_en" => Ok(EuEnglish),
-            "eu_fr" => Ok(EuFrench),
-            "eu_es" => Ok(EuSpanish),
-            "eu_de" => Ok(EuGerman),
-            "eu_nl" => Ok(EuDutch),
-            "eu_it" => Ok(EuItalian),
-            "eu_ru" => Ok(EuRussian),
-            "kr_ko" => Ok(Korean),
-            "zh_cn" => Ok(ChinaChinese),
-            "zh_tw" => Ok(TaiwanChinese),
+        Ok(match x {
+            "jp_ja" => Japanese,
+            "us_en" => UsEnglish,
+            "us_fr" => UsFrench,
+            "us_es" => UsSpanish,
+            "eu_en" => EuEnglish,
+            "eu_fr" => EuFrench,
+            "eu_es" => EuSpanish,
+            "eu_de" => EuGerman,
+            "eu_nl" => EuDutch,
+            "eu_it" => EuItalian,
+            "eu_ru" => EuRussian,
+            "kr_ko" => Korean,
+            "zh_cn" => ChinaChinese,
+            "zh_tw" => TaiwanChinese,
 
-            _ => Ok(None)
-        }
+            _ => None
+        })
     }
 }
