@@ -1,5 +1,5 @@
 use std::str::FromStr;
-use std::fmt::Error;
+use std::convert::Infallible;
 #[repr(u32)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Region {
@@ -63,7 +63,7 @@ impl From<u8> for Region {
 }
 
 impl FromStr for Region {
-    type Err = Error;
+    type Err = Infallible;
     fn from_str(x: &str) -> Result<Self, Self::Err> {
         use Region::*;
         match x {
