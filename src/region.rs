@@ -1,3 +1,5 @@
+use std::str::FromStr;
+use std::fmt::Error;
 #[repr(u32)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Region {
@@ -57,5 +59,30 @@ impl From<u16> for Region {
 impl From<u8> for Region {
     fn from(x: u8) -> Self {
         Region::from(x as usize)
+    }
+}
+
+impl FromStr for Region {
+    type Err = Error;
+    fn from_str(x: &str) -> Result<Self, Self::Err> {
+        use Region::*;
+        match x {
+            "jp_ja" => Ok(Japanese),
+            "us_en" => Ok(UsEnglish),
+            "us_fr" => Ok(UsFrench),
+            "us_es" => Ok(UsSpanish),
+            "eu_en" => Ok(EuEnglish),
+            "eu_fr" => Ok(EuFrench),
+            "eu_es" => Ok(EuSpanish),
+            "eu_de" => Ok(EuGerman),
+            "eu_nl" => Ok(EuDutch),
+            "eu_it" => Ok(EuItalian),
+            "eu_ru" => Ok(EuRussian),
+            "kr_ko" => Ok(Korean),
+            "zh_cn" => Ok(ChinaChinese),
+            "zh_tw" => Ok(TaiwanChinese),
+
+            _ => Ok(None)
+        }
     }
 }
