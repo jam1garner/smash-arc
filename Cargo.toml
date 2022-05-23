@@ -39,6 +39,8 @@ search = ["fuzzy-matcher", "rayon"]
 smash-runtime = ["crc32fast/nightly"]
 serialize = ["serde"]
 
+ffi-bindings = []
+
 # Recommended for use on platforms it builds for
 libzstd = ["zstd"]
 
