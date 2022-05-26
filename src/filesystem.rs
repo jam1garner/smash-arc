@@ -94,7 +94,7 @@ pub struct FileSystem {
     #[br(count = fs_header.file_info_sub_index_count + fs_header.file_data_count_2 + fs_header.extra_count_2)]
     pub file_info_to_datas: Vec<FileInfoToFileData>,
 
-    #[br(count = fs_header.file_data_count + fs_header.file_data_count_2 + fs_header.extra_count)]
+    #[br(count = fs_header.file_data_count + fs_header.file_data_count_2 + fs_header.extra_sub_count)]
     pub file_datas: Vec<FileData>,
 }
 
