@@ -15,6 +15,9 @@ pub enum LookupError {
 
     #[error("the requested resource could not be found")]
     Missing,
+
+    #[error("the requested resource for the given regional index could not be found")]
+    InvalidRegion,
 }
 
 mod arc_file;
@@ -62,7 +65,7 @@ pub trait ArcLookup {
 
         self.get_nonstream_file_contents(hash, region)
             .or_else(|err| match err {
-                LookupError::Missing => self.get_stream_file_contents(hash),
+                LookupError::Missing => self.get_stream_file_contents(hash, region),
                 err => Err(err),
             })
     }
@@ -107,26 +110,42 @@ pub trait ArcLookup {
         inner(self, hash.into(), region)
     }
 
-    fn get_stream_data(&self, hash: Hash40) -> Result<&StreamData, LookupError> {
+    fn get_stream_entry(&self, hash: Hash40) -> Result<&StreamEntry, LookupError> {
         let stream_entries = self.get_stream_entries();
 
-        let index = stream_entries.iter()
-            .find(|entry| entry.hash40() == hash)
-            .map(|entry| entry.index() as usize)
-            .ok_or(LookupError::Missing)?;
-        
-        let index = self.get_stream_file_indices()[index] as usize;
-        
-        Ok(&self.get_stream_datas()[index])
+        Ok(stream_entries.iter()
+            .find(|entry| entry.path.hash40() == hash)
+            .ok_or(LookupError::Missing)?)
     }
 
-    fn get_stream_file_contents<Hash: Into<Hash40>>(&self, hash: Hash) -> Result<Vec<u8>, LookupError> {
-        fn inner<Arc: ArcLookup + ?Sized>(arc: &Arc, hash: Hash40) -> Result<Vec<u8>, LookupError> {
-            let file_data = arc.get_stream_data(hash)?;
+    fn get_stream_data(&self, hash: Hash40, region: Region) -> Result<&StreamData, LookupError> {
+        let stream_entries = self.get_stream_entries();
+
+        let stream_entry = stream_entries.iter()
+            .find(|entry| entry.path.hash40() == hash)
+            .ok_or(LookupError::Missing)?;
+        
+        let mut stream_file_indice_index = stream_entry.path.index() as usize;
+
+        if stream_entry.flags.is_regional() {
+            stream_file_indice_index += region as usize - 1;
+        }
+        if stream_entry.flags.is_localized() {
+            stream_file_indice_index += region.get_locale().ok_or(LookupError::InvalidRegion)? as usize - 1;
+        }
+
+        let stream_data_index = self.get_stream_file_indices()[stream_file_indice_index] as usize;
+        
+        Ok(&self.get_stream_datas()[stream_data_index])
+    }
+
+    fn get_stream_file_contents<Hash: Into<Hash40>>(&self, hash: Hash, region: Region) -> Result<Vec<u8>, LookupError> {
+        fn inner<Arc: ArcLookup + ?Sized>(arc: &Arc, hash: Hash40, region: Region) -> Result<Vec<u8>, LookupError> {
+            let file_data = arc.get_stream_data(hash, region)?;
             arc.read_stream_file_data(file_data)
         }
 
-        inner(self, hash.into())
+        inner(self, hash.into(), region)
     }
 
     fn read_stream_file_data(&self, file_data: &StreamData) -> Result<Vec<u8>, LookupError> {
@@ -233,6 +252,9 @@ pub trait ArcLookup {
     fn get_file_in_folder(&self, file_info: &FileInfo, region: Region) -> FileInfoToFileData {
         if file_info.flags.is_regional() {
             self.get_file_info_to_datas()[usize::from(file_info.info_to_data_index) + (region as usize)]
+        } else if file_info.flags.is_localized() {
+            let locale_index = region.get_locale().unwrap_or(region::Locale::Japan) as usize;
+            self.get_file_info_to_datas()[usize::from(file_info.info_to_data_index) + locale_index]
         } else {
             self.get_file_info_to_datas()[file_info.info_to_data_index]
         }
@@ -363,7 +385,10 @@ pub trait ArcLookup {
                     })
                 }
                 Err(LookupError::Missing) => {
-                    let stream_data = arc.get_stream_data(hash)?;
+                    
+                    let stream_entry = arc.get_stream_entry(hash)?;
+                    
+                    let stream_data = arc.get_stream_data(hash, region)?;
 
                     Ok(FileMetadata {
                         path_hash: hash,
@@ -376,8 +401,8 @@ pub trait ArcLookup {
                         is_stream: true,
                         is_shared: false,
                         is_redirect: false,
-                        is_regional: false,
-                        is_localized: false,
+                        is_regional: stream_entry.flags.is_regional(),
+                        is_localized: stream_entry.flags.is_localized(),
                         is_compressed: false,
                         uses_zstd: false,
                     })
@@ -554,7 +579,7 @@ mod tests {
         let arc = ArcFile::open("/home/jam/re/ult/900/data.arc").unwrap();
         
         let labels = crate::hash_labels::HashLabels::from_file("/home/jam/Downloads/hashes.txt").unwrap();
-        dbg!(arc.file_system.stream_entries[0].hash40().label(&labels));
+        dbg!(arc.file_system.stream_entries[0].path.hash40().label(&labels));
 
         let data = arc.get_file_contents("stream:/sound/bgm/bgm_a10_malrpg2_zarazarasabaku.nus3audio", Region::UsEnglish).unwrap();
 
@@ -608,7 +633,7 @@ mod tests {
 
         let labels = crate::hash_labels::HashLabels::from_file("/home/jam/Downloads/hashes.txt").unwrap();
         for file in arc.get_stream_listing("stream:/sound/bgm").unwrap() {
-            if let Some(label) = file.hash40().label(&labels) {
+            if let Some(label) = file.path.hash40().label(&labels) {
                 extensions.insert(label.rsplit(".").next().unwrap());
             }
         }

@@ -50,27 +50,9 @@ impl From<HashToIndex> for Hash40 {
     }
 }
 
-impl From<&StreamEntry> for Hash40 {
-    fn from(hash_index: &StreamEntry) -> Self {
-        hash_index.hash40()
-    }
-}
-
-impl From<StreamEntry> for Hash40 {
-    fn from(hash_index: StreamEntry) -> Self {
-        hash_index.hash40()
-    }
-}
-
 impl HashToIndex {
     pub fn hash40(&self) -> Hash40 {
         Hash40((self.hash() as u64) + ((self.length() as u64) << 32))
-    }
-}
-
-impl StreamEntry {
-    pub fn hash40(&self) -> Hash40 {
-        Hash40((self.hash() as u64) + ((self.name_length() as u64) << 32))
     }
 }
 
