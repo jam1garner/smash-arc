@@ -1,5 +1,5 @@
-use std::str::FromStr;
 use std::convert::Infallible;
+use std::str::FromStr;
 
 #[repr(u32)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -18,7 +18,7 @@ impl From<usize> for Locale {
             2 => UnitedStates,
             3 => Europe,
 
-            _ => None
+            _ => None,
         }
     }
 }
@@ -50,7 +50,7 @@ impl FromStr for Locale {
             "us" => UnitedStates,
             "eu" => Europe,
 
-            _ => None
+            _ => None,
         })
     }
 }
@@ -93,7 +93,7 @@ impl Region {
             Region::ChinaChinese => Some(Locale::Japan),
             Region::TaiwanChinese => Some(Locale::Japan),
 
-            _ => None
+            _ => None,
         }
     }
 }
@@ -117,7 +117,7 @@ impl From<usize> for Region {
             13 => ChinaChinese,
             14 => TaiwanChinese,
 
-            _ => None
+            _ => None,
         }
     }
 }
@@ -160,7 +160,7 @@ impl FromStr for Region {
             "zh_cn" => ChinaChinese,
             "zh_tw" => TaiwanChinese,
 
-            _ => None
+            _ => None,
         })
     }
 }

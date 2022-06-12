@@ -1,4 +1,4 @@
-use crate::{HashToIndex, QuickDir, StreamEntry};
+use crate::{HashToIndex, QuickDir};
 use binrw::BinRead;
 use crc32fast::Hasher;
 
@@ -234,4 +234,3 @@ mod tests {
         );
     }
 }
-

@@ -1,13 +1,9 @@
-use std::{
-    fs::File,
-    slice,
-    io::BufReader,
-};
+use std::{fs::File, io::BufReader, slice};
 
-use crate::loaded_arc::{LoadedArc, LoadedSearchSection};
-use crate::{ArcLookup, SearchLookup};
-use crate::SeekRead;
 use crate::filesystem::*;
+use crate::loaded_arc::{LoadedArc, LoadedSearchSection};
+use crate::SeekRead;
+use crate::{ArcLookup, SearchLookup};
 
 impl ArcLookup for LoadedArc {
     fn get_file_info_buckets(&self) -> &[FileInfoBucket] {
@@ -68,7 +64,7 @@ impl ArcLookup for LoadedArc {
     fn get_file_infos(&self) -> &[FileInfo] {
         unsafe {
             let fs = *self.fs_header;
-            let table_size = fs.file_info_count + fs.file_data_count_2 + fs.extra_count ;
+            let table_size = fs.file_info_count + fs.file_data_count_2 + fs.extra_count;
             slice::from_raw_parts(self.file_infos, table_size as _)
         }
     }
@@ -76,7 +72,7 @@ impl ArcLookup for LoadedArc {
     fn get_file_infos_mut(&mut self) -> &mut [FileInfo] {
         unsafe {
             let fs = *self.fs_header;
-            let table_size = fs.file_info_count + fs.file_data_count_2 + fs.extra_count ;
+            let table_size = fs.file_info_count + fs.file_data_count_2 + fs.extra_count;
             slice::from_raw_parts_mut(self.file_infos, table_size as _)
         }
     }
@@ -84,7 +80,7 @@ impl ArcLookup for LoadedArc {
     fn get_file_info_to_datas(&self) -> &[FileInfoToFileData] {
         unsafe {
             let fs = *self.fs_header;
-            let table_size = fs.file_info_sub_index_count  + fs.file_data_count_2 + fs.extra_count_2;
+            let table_size = fs.file_info_sub_index_count + fs.file_data_count_2 + fs.extra_count_2;
             slice::from_raw_parts(self.file_info_to_datas, table_size as _)
         }
     }
@@ -92,7 +88,7 @@ impl ArcLookup for LoadedArc {
     fn get_file_info_to_datas_mut(&mut self) -> &mut [FileInfoToFileData] {
         unsafe {
             let fs = *self.fs_header;
-            let table_size = fs.file_info_sub_index_count  + fs.file_data_count_2 + fs.extra_count_2;
+            let table_size = fs.file_info_sub_index_count + fs.file_data_count_2 + fs.extra_count_2;
             slice::from_raw_parts_mut(self.file_info_to_datas, table_size as _)
         }
     }
@@ -104,7 +100,7 @@ impl ArcLookup for LoadedArc {
             slice::from_raw_parts(self.file_datas, table_size as _)
         }
     }
-    
+
     fn get_file_datas_mut(&mut self) -> &mut [FileData] {
         unsafe {
             let fs = *self.fs_header;
@@ -188,33 +184,23 @@ impl ArcLookup for LoadedArc {
 
 impl SearchLookup for LoadedArc {
     fn get_folder_path_to_index(&self) -> &[HashToIndex] {
-        unsafe {
-            (*self.loaded_file_system_search).get_folder_path_to_index()
-        }
+        unsafe { (*self.loaded_file_system_search).get_folder_path_to_index() }
     }
 
     fn get_folder_path_list(&self) -> &[FolderPathListEntry] {
-        unsafe {
-            (*self.loaded_file_system_search).get_folder_path_list()
-        }
+        unsafe { (*self.loaded_file_system_search).get_folder_path_list() }
     }
 
     fn get_path_to_index(&self) -> &[HashToIndex] {
-        unsafe {
-            (*self.loaded_file_system_search).get_path_to_index()
-        }
+        unsafe { (*self.loaded_file_system_search).get_path_to_index() }
     }
 
     fn get_path_list_indices(&self) -> &[u32] {
-        unsafe {
-            (*self.loaded_file_system_search).get_path_list_indices()
-        }
+        unsafe { (*self.loaded_file_system_search).get_path_list_indices() }
     }
 
     fn get_path_list(&self) -> &[PathListEntry] {
-        unsafe {
-            (*self.loaded_file_system_search).get_path_list()
-        }
+        unsafe { (*self.loaded_file_system_search).get_path_list() }
     }
 }
 

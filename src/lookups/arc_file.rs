@@ -1,5 +1,5 @@
-use std::io;
 use crate::*;
+use std::io;
 
 impl ArcLookup for ArcFile {
     fn get_file_info_buckets(&self) -> &[FileInfoBucket] {
@@ -100,7 +100,6 @@ impl ArcLookup for ArcFile {
 }
 
 use std::sync::MutexGuard;
-
 
 // Wrapper type for implementing Read + Seek for MutexGuard
 #[repr(transparent)]
