@@ -1,5 +1,60 @@
-use std::str::FromStr;
 use std::convert::Infallible;
+use std::str::FromStr;
+
+#[repr(u32)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Locale {
+    None = 0,
+    Japan = 1,
+    UnitedStates = 2,
+    Europe = 3,
+}
+
+impl From<usize> for Locale {
+    fn from(r: usize) -> Locale {
+        use Locale::*;
+        match r {
+            1 => Japan,
+            2 => UnitedStates,
+            3 => Europe,
+
+            _ => None,
+        }
+    }
+}
+
+impl From<u32> for Locale {
+    fn from(x: u32) -> Self {
+        Locale::from(x as usize)
+    }
+}
+
+impl From<u16> for Locale {
+    fn from(x: u16) -> Self {
+        Locale::from(x as usize)
+    }
+}
+
+impl From<u8> for Locale {
+    fn from(x: u8) -> Self {
+        Locale::from(x as usize)
+    }
+}
+
+impl FromStr for Locale {
+    type Err = Infallible;
+    fn from_str(x: &str) -> Result<Self, Self::Err> {
+        use Locale::*;
+        Ok(match x {
+            "jp" => Japan,
+            "us" => UnitedStates,
+            "eu" => Europe,
+
+            _ => None,
+        })
+    }
+}
+
 #[repr(u32)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Region {
@@ -18,6 +73,29 @@ pub enum Region {
     Korean = 12,
     ChinaChinese = 13,
     TaiwanChinese = 14,
+}
+
+impl Region {
+    pub fn get_locale(&self) -> Option<Locale> {
+        match self {
+            Region::Japanese => Some(Locale::Japan),
+            Region::UsEnglish => Some(Locale::UnitedStates),
+            Region::UsFrench => Some(Locale::UnitedStates),
+            Region::UsSpanish => Some(Locale::UnitedStates),
+            Region::EuEnglish => Some(Locale::Europe),
+            Region::EuFrench => Some(Locale::Europe),
+            Region::EuSpanish => Some(Locale::Europe),
+            Region::EuGerman => Some(Locale::Europe),
+            Region::EuDutch => Some(Locale::Europe),
+            Region::EuItalian => Some(Locale::Europe),
+            Region::EuRussian => Some(Locale::Europe),
+            Region::Korean => Some(Locale::Japan),
+            Region::ChinaChinese => Some(Locale::Japan),
+            Region::TaiwanChinese => Some(Locale::Japan),
+
+            _ => None,
+        }
+    }
 }
 
 impl From<usize> for Region {
@@ -39,7 +117,7 @@ impl From<usize> for Region {
             13 => ChinaChinese,
             14 => TaiwanChinese,
 
-            _ => None
+            _ => None,
         }
     }
 }
@@ -82,7 +160,40 @@ impl FromStr for Region {
             "zh_cn" => ChinaChinese,
             "zh_tw" => TaiwanChinese,
 
-            _ => None
+            _ => None,
         })
+    }
+}
+
+impl std::fmt::Display for Region {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Region::None => write!(f, ""),
+            Region::Japanese => write!(f, "jp_ja"),
+            Region::UsEnglish => write!(f, "us_en"),
+            Region::UsFrench => write!(f, "us_fr"),
+            Region::UsSpanish => write!(f, "us_es"),
+            Region::EuEnglish => write!(f, "eu_en"),
+            Region::EuFrench => write!(f, "eu_fr"),
+            Region::EuSpanish => write!(f, "eu_es"),
+            Region::EuGerman => write!(f, "eu_de"),
+            Region::EuDutch => write!(f, "eu_nl"),
+            Region::EuItalian => write!(f, "eu_it"),
+            Region::EuRussian => write!(f, "eu_ru"),
+            Region::Korean => write!(f, "kr_ko"),
+            Region::ChinaChinese => write!(f, "zh_cn"),
+            Region::TaiwanChinese => write!(f, "zh_tw"),
+        }
+    }
+}
+
+impl std::fmt::Display for Locale {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Locale::None => write!(f, ""),
+            Locale::Japan => write!(f, "jp"),
+            Locale::UnitedStates => write!(f, "us"),
+            Locale::Europe => write!(f, "eu"),
+        }
     }
 }

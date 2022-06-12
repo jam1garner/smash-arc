@@ -151,14 +151,19 @@ pub struct QuickDir {
     pub index: u32,
 }
 
-#[bitfield]
 #[derive(BinRead, Debug, Clone, Copy)]
-#[br(map = Self::from_bytes)]
 pub struct StreamEntry {
-    pub hash: u32,
-    pub name_length: u8,
-    pub index: B24,
-    pub flags: u32,
+    pub path: HashToIndex,
+    pub flags: StreamEntryFlags,
+}
+
+#[bitfield]
+#[derive(BinRead, Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[br(map = Self::from_bytes)]
+pub struct StreamEntryFlags {
+    pub is_regional: bool,
+    pub is_localized: bool,
+    pub unused: B30,
 }
 
 #[bitfield]

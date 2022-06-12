@@ -87,4 +87,3 @@ pub struct LoadedSearchSection {
     pub path_list_indices: *const u32,
     pub path_list: *const PathListEntry, // ...
 }
-

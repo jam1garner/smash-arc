@@ -22,7 +22,7 @@ impl HashLabels {
         HashLabels {
             labels: text
                 .lines()
-                .map(|line| (hash40(&line), line.to_owned()))
+                .map(|line| (hash40(line), line.to_owned()))
                 .collect(),
         }
     }

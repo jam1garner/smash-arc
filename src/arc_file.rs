@@ -39,7 +39,7 @@ pub struct ArcFile {
 
 #[cfg(feature = "dir-listing")]
 fn parents_of_dir(dir: Hash40, labels: &mut HashLabels) -> Option<Vec<(Hash40, FileNode)>> {
-    let label = dir.label(&labels)?.to_owned();
+    let label = dir.label(labels)?.to_owned();
     let mut label = &label[..];
     let mut hashes = Vec::new();
     let mut last_hash = dir;
@@ -71,7 +71,7 @@ fn dir_listing_flat<'a>(
     let mut stream_dirs = Vec::new();
     for path_hash in fs.stream_hash_to_entries.iter().map(HashToIndex::hash40) {
         if let Some(label) = path_hash
-            .label(&labels)
+            .label(labels)
             .and_then(|label| label.rfind('/').map(|pos| label[..pos].to_owned()))
         {
             let mut label = &label[..];

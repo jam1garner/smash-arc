@@ -18,11 +18,12 @@ compile_error!("At least one ZSTD backend feature must be enabled");
 
 #[cfg(not(any(feature = "libzstd", feature = "rust-zstd")))]
 mod template {
-    use std::io::{Read, Write, Result};
+    use std::io::{Read, Result, Write};
 
     pub fn copy_decode<R, W>(mut _source: R, mut _destination: W) -> Result<()>
-        where R: Read,
-              W: Write,
+    where
+        R: Read,
+        W: Write,
     {
         todo!()
     }
