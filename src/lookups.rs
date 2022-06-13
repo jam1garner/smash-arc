@@ -306,6 +306,10 @@ pub trait ArcLookup {
         if file_info.flags.is_regional() {
             &mut self.get_file_info_to_datas_mut()
                 [usize::from(file_info.info_to_data_index) + (region as usize)]
+        } else if file_info.flags.is_localized() {
+            let locale_index = region.get_locale().unwrap_or(region::Locale::Japan) as usize;
+            &mut self.get_file_info_to_datas_mut()
+                [usize::from(file_info.info_to_data_index) + locale_index]
         } else {
             &mut self.get_file_info_to_datas_mut()[file_info.info_to_data_index]
         }
