@@ -11,7 +11,10 @@ use binrw::{io::Cursor, BinRead, BinReaderExt, BinResult, FilePtr64};
 
 use crate::filesystem::HashToIndex;
 use crate::hash_labels::HashLabels;
-use crate::{CompressedFileSystem, FileNode, FileSystem, Hash40};
+use crate::{
+    CompressedFileSystem, CompressedSearchFileSystem, FileNode, FileSystem, Hash40,
+    SearchFileSystem,
+};
 
 pub trait SeekRead: std::io::Read + std::io::Seek {}
 impl<R: std::io::Read + std::io::Seek> SeekRead for R {}
@@ -26,8 +29,11 @@ pub struct ArcFile {
 
     #[br(parse_with = FilePtr64::parse)]
     #[br(map = |x: CompressedFileSystem| x.0)]
-    pub file_system: FileSystem,
-    pub patch_section: u64,
+    pub file_system: FileSystem, // there is an unused set of tables at the end of this section's decompressed data that contains the patch files
+
+    #[br(parse_with = FilePtr64::parse)]
+    #[br(map = |x: CompressedSearchFileSystem| x.0)]
+    pub search_file_system: SearchFileSystem,
 
     #[br(calc = Mutex::new(Box::new(Cursor::new([])) as _))]
     pub reader: Mutex<Box<dyn SeekRead + Send>>,

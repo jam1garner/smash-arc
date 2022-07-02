@@ -20,16 +20,43 @@ impl BinRead for CompressedFileSystem {
     where
         R: Read + Seek,
     {
+        let current_offset = options.offset();
         let header = CompTableHeader::read_options(reader, options, args)?;
 
         let mut compressed = vec![0; header.comp_size as usize];
-
         reader.read_exact(&mut compressed)?;
+
+        reader.seek(SeekFrom::Start(current_offset + header.section_size as u64))?; // seek to end of section to continue reading properly
 
         let compressed = Cursor::new(compressed);
         let mut decompressed = Cursor::new(crate::zstd_backend::decode_all(compressed)?);
 
         FileSystem::read_options(&mut decompressed, options, ()).map(CompressedFileSystem)
+    }
+}
+
+pub(crate) struct CompressedSearchFileSystem(pub SearchFileSystem);
+
+impl BinRead for CompressedSearchFileSystem {
+    type Args = ();
+
+    fn read_options<R>(reader: &mut R, options: &ReadOptions, args: Self::Args) -> BinResult<Self>
+    where
+        R: Read + Seek,
+    {
+        let current_offset = options.offset();
+        let header = CompTableHeader::read_options(reader, options, args)?;
+
+        let mut compressed = vec![0; header.comp_size as usize];
+        reader.read_exact(&mut compressed)?;
+
+        reader.seek(SeekFrom::Start(current_offset + header.section_size as u64))?; // seek to end of section to continue reading properly
+
+        let compressed = Cursor::new(compressed);
+        let mut decompressed = Cursor::new(crate::zstd_backend::decode_all(compressed)?);
+
+        SearchFileSystem::read_options(&mut decompressed, options, ())
+            .map(CompressedSearchFileSystem)
     }
 }
 
@@ -98,6 +125,27 @@ pub struct FileSystem {
     pub file_datas: Vec<FileData>,
 }
 
+#[binread]
+#[derive(Debug)]
+pub struct SearchFileSystem {
+    pub header: SearchFileSystemHeader,
+
+    #[br(count = header.folder_count)]
+    pub folder_lookup: Vec<HashToIndex>,
+
+    #[br(count = header.folder_count)]
+    pub folders: Vec<FolderPathListEntry>,
+
+    #[br(count = header.path_index_count)]
+    pub path_index_lookup: Vec<HashToIndex>,
+
+    #[br(count = header.path_index_count)]
+    pub path_indices: Vec<u32>,
+
+    #[br(count = header.path_count)]
+    pub paths: Vec<PathListEntry>,
+}
+
 #[derive(BinRead, Debug, Clone, Copy)]
 pub struct FileSystemHeader {
     pub table_filesize: u32,
@@ -127,10 +175,18 @@ pub struct FileSystemHeader {
     pub extra_folder: u32,
     pub extra_count: u32,
 
-    pub unk: [u32; 2],
+    pub unk: [u32; 2], // in the loaded arc this is a pointer to the parsed search data
 
     pub extra_count_2: u32,
     pub extra_sub_count: u32,
+}
+
+#[derive(BinRead, Debug, Copy, Clone)]
+pub struct SearchFileSystemHeader {
+    pub size: u64,
+    pub folder_count: u32,
+    pub path_index_count: u32,
+    pub path_count: u32,
 }
 
 #[derive(BinRead, Debug)]
@@ -319,7 +375,7 @@ pub struct FileDataFlags {
 }
 
 #[repr(C)]
-#[derive(Debug, Copy, Clone)]
+#[derive(BinRead, Debug, Copy, Clone)]
 pub struct SearchListEntry {
     pub path: HashToIndex,
     pub parent: HashToIndex,
@@ -328,11 +384,11 @@ pub struct SearchListEntry {
 }
 
 #[repr(transparent)]
-#[derive(Debug, Copy, Clone)]
+#[derive(BinRead, Debug, Copy, Clone)]
 pub struct PathListEntry(pub SearchListEntry);
 
 #[repr(transparent)]
-#[derive(Debug, Copy, Clone)]
+#[derive(BinRead, Debug, Copy, Clone)]
 pub struct FolderPathListEntry(pub SearchListEntry);
 
 macro_rules! impl_fs_index {

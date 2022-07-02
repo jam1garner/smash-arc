@@ -99,6 +99,28 @@ impl ArcLookup for ArcFile {
     }
 }
 
+impl SearchLookup for ArcFile {
+    fn get_folder_path_to_index(&self) -> &[HashToIndex] {
+        &self.search_file_system.folder_lookup
+    }
+
+    fn get_folder_path_list(&self) -> &[FolderPathListEntry] {
+        &self.search_file_system.folders
+    }
+
+    fn get_path_to_index(&self) -> &[HashToIndex] {
+        &self.search_file_system.path_index_lookup
+    }
+
+    fn get_path_list_indices(&self) -> &[u32] {
+        &self.search_file_system.path_indices
+    }
+
+    fn get_path_list(&self) -> &[PathListEntry] {
+        &self.search_file_system.paths
+    }
+}
+
 use std::sync::MutexGuard;
 
 // Wrapper type for implementing Read + Seek for MutexGuard
