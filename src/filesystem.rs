@@ -1,7 +1,8 @@
 use crate::{FileDataIdx, FileInfoIdx, FileInfoIndiceIdx, FilePathIdx, Hash40, InfoToDataIdx};
 use modular_bitfield::prelude::*;
+use std::convert::TryFrom;
 
-use binrw::{binread, io::*, BinRead, BinResult, ReadOptions};
+use binrw::{binread, io::*, BinRead, BinResult, Endian};
 
 #[derive(BinRead, Debug, Clone, Copy)]
 #[br(magic = 0x10_u32)]
@@ -14,14 +15,14 @@ pub struct CompTableHeader {
 pub(crate) struct CompressedFileSystem(pub FileSystem);
 
 impl BinRead for CompressedFileSystem {
-    type Args = ();
+    type Args<'a> = ();
 
-    fn read_options<R>(reader: &mut R, options: &ReadOptions, args: Self::Args) -> BinResult<Self>
+    fn read_options<R>(reader: &mut R, endian: Endian, args: Self::Args<'_>) -> BinResult<Self>
     where
         R: Read + Seek,
     {
-        let current_offset = options.offset();
-        let header = CompTableHeader::read_options(reader, options, args)?;
+        let current_offset = reader.stream_position().unwrap();
+        let header = CompTableHeader::read_options(reader, endian, args)?;
 
         let mut compressed = vec![0; header.comp_size as usize];
         reader.read_exact(&mut compressed)?;
@@ -31,21 +32,21 @@ impl BinRead for CompressedFileSystem {
         let compressed = Cursor::new(compressed);
         let mut decompressed = Cursor::new(crate::zstd_backend::decode_all(compressed)?);
 
-        FileSystem::read_options(&mut decompressed, options, ()).map(CompressedFileSystem)
+        FileSystem::read_options(&mut decompressed, endian, ()).map(CompressedFileSystem)
     }
 }
 
 pub(crate) struct CompressedSearchFileSystem(pub SearchFileSystem);
 
 impl BinRead for CompressedSearchFileSystem {
-    type Args = ();
+    type Args<'a> = ();
 
-    fn read_options<R>(reader: &mut R, options: &ReadOptions, args: Self::Args) -> BinResult<Self>
+    fn read_options<R>(reader: &mut R, endian: Endian, args: Self::Args<'_>) -> BinResult<Self>
     where
         R: Read + Seek,
     {
-        let current_offset = options.offset();
-        let header = CompTableHeader::read_options(reader, options, args)?;
+        let current_offset = reader.stream_position().unwrap();
+        let header = CompTableHeader::read_options(reader, endian, args)?;
 
         let mut compressed = vec![0; header.comp_size as usize];
         reader.read_exact(&mut compressed)?;
@@ -55,9 +56,10 @@ impl BinRead for CompressedSearchFileSystem {
         let compressed = Cursor::new(compressed);
         let mut decompressed = Cursor::new(crate::zstd_backend::decode_all(compressed)?);
 
-        SearchFileSystem::read_options(&mut decompressed, options, ())
+        SearchFileSystem::read_options(&mut decompressed, endian, ())
             .map(CompressedSearchFileSystem)
     }
+
 }
 
 /// The filesystem itself. Includes all the linking between paths, file data, directories, and
