@@ -148,6 +148,7 @@ pub struct SearchFileSystem {
     pub paths: Vec<PathListEntry>,
 }
 
+#[repr(C)]
 #[derive(BinRead, Debug, Clone, Copy)]
 pub struct FileSystemHeader {
     pub table_filesize: u32,
@@ -183,6 +184,7 @@ pub struct FileSystemHeader {
     pub extra_sub_count: u32,
 }
 
+#[repr(C)]
 #[derive(BinRead, Debug, Copy, Clone)]
 pub struct SearchFileSystemHeader {
     pub size: u64,
@@ -191,6 +193,7 @@ pub struct SearchFileSystemHeader {
     pub path_count: u32,
 }
 
+#[repr(C)]
 #[derive(BinRead, Debug)]
 pub struct StreamHeader {
     pub quick_dir_count: u32,
@@ -209,6 +212,7 @@ pub struct QuickDir {
     pub index: u32,
 }
 
+#[repr(C)]
 #[derive(BinRead, Debug, Clone, Copy)]
 pub struct StreamEntry {
     pub path: HashToIndex,
@@ -239,6 +243,7 @@ impl PartialEq<Hash40> for HashToIndex {
     }
 }
 
+#[repr(C)]
 #[derive(BinRead, Debug, Clone, Copy)]
 pub struct FileInfoBucket {
     pub start: u32,
@@ -294,6 +299,7 @@ pub struct DirInfoFlags {
     pub unk3: B3,
 }
 
+#[repr(C)]
 #[derive(BinRead, Debug, Clone, Copy)]
 pub struct StreamData {
     pub size: u64,
