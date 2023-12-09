@@ -8,6 +8,8 @@ pub enum Locale {
     Japan = 1,
     UnitedStates = 2,
     Europe = 3,
+    Korea = 4,
+    China = 5,
 }
 
 impl From<usize> for Locale {
@@ -17,6 +19,8 @@ impl From<usize> for Locale {
             1 => Japan,
             2 => UnitedStates,
             3 => Europe,
+            4 => Korea,
+            5 => China,
 
             _ => None,
         }
@@ -49,6 +53,8 @@ impl FromStr for Locale {
             "jp" => Japan,
             "us" => UnitedStates,
             "eu" => Europe,
+            "kr" => Korea,
+            "zh" => China,
 
             _ => None,
         })
@@ -89,9 +95,9 @@ impl Region {
             Region::EuDutch => Some(Locale::Europe),
             Region::EuItalian => Some(Locale::Europe),
             Region::EuRussian => Some(Locale::Europe),
-            Region::Korean => Some(Locale::Japan),
-            Region::ChinaChinese => Some(Locale::Japan),
-            Region::TaiwanChinese => Some(Locale::Japan),
+            Region::Korean => Some(Locale::Korea),
+            Region::ChinaChinese => Some(Locale::China),
+            Region::TaiwanChinese => Some(Locale::China),
 
             _ => None,
         }
@@ -194,6 +200,8 @@ impl std::fmt::Display for Locale {
             Locale::Japan => write!(f, "jp"),
             Locale::UnitedStates => write!(f, "us"),
             Locale::Europe => write!(f, "eu"),
+            Locale::Korea => write!(f, "kr"),
+            Locale::China => write!(f, "zh"),
         }
     }
 }
