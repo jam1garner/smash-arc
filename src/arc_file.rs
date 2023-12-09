@@ -7,7 +7,7 @@ use std::{
     sync::Mutex,
 };
 
-use binrw::{io::Cursor, BinRead, BinReaderExt, BinResult, FilePtr64, binread};
+use binrw::{io::Cursor, BinReaderExt, BinResult, FilePtr64, binread};
 
 use crate::filesystem::HashToIndex;
 use crate::hash_labels::HashLabels;
