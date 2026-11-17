@@ -54,6 +54,9 @@ mod ffi_bindings;
 #[cfg(feature = "search")]
 mod search;
 
+#[cfg(feature = "search")]
+pub use search::*;
+
 mod arc_file;
 #[cfg(feature = "smash-runtime")]
 mod loaded_arc;
